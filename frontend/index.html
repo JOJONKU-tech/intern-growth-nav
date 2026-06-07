@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>实习生成长导航</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ====== LOGIN ====== -->
+<div id="loginPage" class="login-page">
+  <div class="login-hero">
+    <h1>业务部实习生成长导航</h1>
+    <p>标准化带教 · 成长可视化 · 协同高效</p>
+  </div>
+  <div class="login-cards">
+    <div class="login-card" onclick="pendingRole='intern';showIdentityPicker('intern')">
+      <div class="card-emoji">🎓</div>
+      <div class="card-title">我是实习生</div>
+      <div class="card-sub">查看我的成长路径</div>
+      <div class="card-accounts" id="internAccounts"></div>
+    </div>
+    <div class="login-card" onclick="pendingRole='mentor';showIdentityPicker('mentor')">
+      <div class="card-emoji">👨‍🏫</div>
+      <div class="card-title">我是导师</div>
+      <div class="card-sub">管理带教计划</div>
+      <div class="card-accounts" id="mentorAccounts"></div>
+    </div>
+    <div class="login-card" onclick="pendingRole='hr';showIdentityPicker('hr')">
+      <div class="card-emoji">📊</div>
+      <div class="card-title">我是 HR</div>
+      <div class="card-sub">全局适岗总览</div>
+      <div class="card-accounts" id="hrAccounts"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== IDENTITY PICKER ====== -->
+<div id="identityPicker" class="login-page hidden" style="background:#f5f7fa;">
+  <div style="text-align:center;">
+    <h2 style="font-size:24px;margin-bottom:8px;" id="pickerTitle"></h2>
+    <p style="color:var(--text-secondary);margin-bottom:32px;">请选择您的身份</p>
+    <div id="pickerList" style="display:flex;flex-direction:column;gap:12px;max-width:400px;margin:0 auto;"></div>
+    <button class="btn btn-secondary" style="margin-top:24px;" onclick="document.getElementById('identityPicker').classList.add('hidden');document.getElementById('loginPage').classList.remove('hidden');">← 返回</button>
+  </div>
+</div>
+
+<!-- ====== APP ====== -->
+<div id="app" class="app">
+  <nav class="nav">
+    <span class="nav-brand">实习生成长导航</span>
+    <div class="nav-user">
+      <span class="role-tag" id="navRole"></span>
+      <span id="navName" style="font-size:14px;font-weight:500;"></span>
+      <button class="nav-logout" onclick="logout()">退出</button>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- ====== INTERN VIEW ====== -->
+    <div id="viewIntern" style="display:none;">
+      <div id="internProfile" style="margin-bottom:24px;">
+        <span style="font-size:20px;font-weight:600;" id="iName"></span>
+        <span style="font-size:13px;color:var(--text-secondary);margin-left:12px;" id="iDept"></span>
+        <span style="font-size:13px;color:var(--text-tertiary);margin-left:8px;" id="iPos"></span>
+      </div>
+      <div class="timeline" id="timeline"></div>
+      <div class="progress-bar-wrap">
+        <span style="font-size:13px;color:var(--text-secondary);">总体进度</span>
+        <div class="progress-bar"><div class="progress-fill" id="internProgressBar"></div></div>
+        <span class="progress-text" id="internProgressText"></span>
+      </div>
+      <div id="stageSections"></div>
+    </div>
+
+    <!-- ====== MENTOR VIEW ====== -->
+    <div id="viewMentor" style="display:none;">
+      <div id="mentorList" style="display:block;">
+        <div class="section-title">我的实习生</div>
+        <div class="stage-filter" id="stageFilter"></div>
+        <div class="intern-cards" id="internCards"></div>
+      </div>
+      <div id="mentorDetail" style="display:none;"></div>
+    </div>
+
+    <!-- ====== HR VIEW ====== -->
+    <div id="viewHR" style="display:none;">
+      <div class="section-title">适岗总览</div>
+      <div class="kpi-row" id="kpiRow"></div>
+      <div class="chart-row">
+        <div class="chart-card"><h4>岗位分布</h4><canvas id="chartDept"></canvas></div>
+        <div class="chart-card"><h4>阶段分布</h4><canvas id="chartStage"></canvas></div>
+      </div>
+      <div class="data-table-wrap">
+        <h4>实习生列表</h4>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead><tr><th>姓名</th><th>岗位</th><th>部门</th><th>阶段</th><th>进度</th><th>入职日期</th></tr></thead>
+            <tbody id="hrTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="hrDetail" style="display:none;margin-top:24px;"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ====== FEEDBACK MODAL ====== -->
+<div class="modal-overlay" id="feedbackModal">
+  <div class="modal-box">
+    <h3 id="modalTitle">完成确认</h3>
+    <textarea id="modalFeedback" placeholder="输入反馈（选填）..."></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="confirmComplete()">确认完成</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ====== GLOBAL STATE ======
+let currentUser = null;
+let pendingRole = null;
+let pendingPlanId = null;
+let pendingInternId = null;
+let currentMentorInternId = null;
+let allAccounts = [];
+let hrData = null;
+
+// ====== INIT ======
+async function init() {
+  const res = await fetch('/api/auth/accounts');
+  allAccounts = await res.json();
+  renderLoginAccounts();
+}
+
+function renderLoginAccounts() {
+  const interns = allAccounts.filter(a => a.role === 'intern');
+  const mentors = allAccounts.filter(a => a.role === 'mentor');
+  const hrs = allAccounts.filter(a => a.role === 'hr');
+
+  document.getElementById('internAccounts').innerHTML = interns.slice(0,4).map(a =>
+    `<button class="account-btn" onclick="event.stopPropagation();login(${a.id})">${a.name}</button>`
+  ).join('');
+
+  document.getElementById('mentorAccounts').innerHTML = mentors.map(a =>
+    `<button class="account-btn" onclick="event.stopPropagation();login(${a.id})">${a.name}</button>`
+  ).join('');
+
+  document.getElementById('hrAccounts').innerHTML = hrs.map(a =>
+    `<button class="account-btn" onclick="event.stopPropagation();login(${a.id})">${a.name}</button>`
+  ).join('');
+}
+
+function showIdentityPicker(role) {
+  document.getElementById('loginPage').classList.add('hidden');
+  document.getElementById('identityPicker').classList.remove('hidden');
+  const labels = {intern:'实习生',mentor:'导师',hr:'HR'};
+  document.getElementById('pickerTitle').textContent = '我是' + labels[role];
+  const list = allAccounts.filter(a => a.role === (role === 'intern' ? 'intern' : role));
+  document.getElementById('pickerList').innerHTML = list.map(a =>
+    `<button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px;" onclick="login(${a.id})">${a.name}${a.role==='mentor'?' - '+['','研发','产品','销售'][list.indexOf(a)]:''}</button>`
+  ).join('');
+}
+
+// ====== LOGIN ======
+async function login(userId) {
+  const res = await fetch('/api/auth/login/' + userId);
+  currentUser = await res.json();
+  document.getElementById('loginPage').classList.add('hidden');
+  document.getElementById('identityPicker').classList.add('hidden');
+  document.getElementById('app').classList.add('active');
+  document.getElementById('navName').textContent = currentUser.name;
+  const roleLabels = {hr:'HR',mentor:'导师',intern:'实习生'};
+  document.getElementById('navRole').textContent = roleLabels[currentUser.role] || currentUser.role;
+
+  // Hide all views
+  ['viewIntern','viewMentor','viewHR'].forEach(id => document.getElementById(id).style.display='none');
+
+  if (currentUser.role === 'intern') await loadInternView();
+  else if (currentUser.role === 'mentor') await loadMentorView();
+  else if (currentUser.role === 'hr') await loadHRView();
+}
+
+function logout() {
+  currentUser = null;
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('loginPage').classList.remove('hidden');
+  init();
+}
+
+// ====== INTERN VIEW ======
+async function loadInternView() {
+  document.getElementById('viewIntern').style.display = 'block';
+  const res = await fetch('/api/intern/' + currentUser.id);
+  const data = await res.json();
+  if (data.error) return;
+
+  document.getElementById('iName').textContent = data.intern.name;
+  document.getElementById('iDept').textContent = data.intern.department + '部';
+  document.getElementById('iPos').textContent = data.intern.position;
+  document.getElementById('internProgressBar').style.width = data.progress_pct + '%';
+  document.getElementById('internProgressText').textContent = data.completed_milestones + ' / ' + data.total_milestones + ' (' + data.progress_pct + '%)';
+
+  // Timeline
+  const stageKeys = ['onboarding','growth','independent'];
+  const stageNames = ['入职适应','快速成长','独立贡献'];
+  const currentIdx = stageKeys.indexOf(data.intern.stage);
+  const tl = document.getElementById('timeline');
+  tl.innerHTML = stageNames.map((name,i) => {
+    let cls = '';
+    if (i < currentIdx) cls = 'done';
+    else if (i === currentIdx) cls = 'active';
+    return `<div class="timeline-step ${cls}"><div class="dot">${i < currentIdx ? '✓' : i+1}</div><div class="label">${name}</div></div>`;
+  }).join('');
+
+  // Stage sections
+  const sections = document.getElementById('stageSections');
+  sections.innerHTML = data.stages.map((stage,si) => {
+    const stageKey = stageKeys[si];
+    const allDone = stage.items.every(it => it.status === 'completed');
+    return `
+      <div class="stage-section">
+        <h3>${stageNames[si]} <span class="stage-badge ${stageKey}">${allDone ? '已完成' : (stage.items.some(it=>it.status==='completed') ? '进行中' : '待开始')}</span></h3>
+        ${stage.items.map(it => `
+          <div class="milestone-item">
+            <div class="milestone-status ${it.status}">${it.status==='completed'?'✓':'○'}</div>
+            <div class="milestone-info">
+              <h4>${it.name}</h4>
+              <p>${it.description}</p>
+              ${it.feedback ? `<div class="milestone-feedback">导师反馈：${it.feedback}</div>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }).join('');
+}
+
+// ====== MENTOR VIEW ======
+async function loadMentorView() {
+  document.getElementById('viewMentor').style.display = 'block';
+  document.getElementById('mentorList').style.display = 'block';
+  document.getElementById('mentorDetail').style.display = 'none';
+
+  const res = await fetch('/api/mentor/' + currentUser.id + '/interns');
+  const interns = await res.json();
+
+  // Stage filter
+  document.getElementById('stageFilter').innerHTML = `
+    <button class="filter-btn active" onclick="filterInterns('all',this)">全部</button>
+    <button class="filter-btn" onclick="filterInterns('onboarding',this)">入职适应</button>
+    <button class="filter-btn" onclick="filterInterns('growth',this)">快速成长</button>
+    <button class="filter-btn" onclick="filterInterns('independent',this)">独立贡献</button>
+  `;
+
+  window._mentorInterns = interns;
+  renderInternCards(interns);
+}
+
+function filterInterns(stage, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = stage === 'all' ? window._mentorInterns : window._mentorInterns.filter(i => i.stage === stage);
+  renderInternCards(filtered);
+}
+
+function renderInternCards(interns) {
+  const stageNames = {onboarding:'入职适应',growth:'快速成长',independent:'独立贡献'};
+  document.getElementById('internCards').innerHTML = interns.length === 0
+    ? '<div class="empty-state">暂无该阶段的实习生</div>'
+    : interns.map(i => `
+    <div class="intern-card" onclick="openInternDetail(${i.id})">
+      <div class="card-header">
+        <span class="card-name">${i.name}</span>
+        <span class="card-dept">${stageNames[i.stage]||i.stage}</span>
+      </div>
+      <div class="card-pos">${i.department}部 · ${i.position}</div>
+      <div class="card-progress">
+        <div class="mini-bar"><div class="mini-fill" style="width:${i.progress_pct}%"></div></div>
+        <span class="mini-pct">${i.completed}/${i.total}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function openInternDetail(internId) {
+  currentMentorInternId = internId;
+  document.getElementById('mentorList').style.display = 'none';
+  document.getElementById('mentorDetail').style.display = 'block';
+
+  const res = await fetch('/api/mentor/' + currentUser.id + '/intern/' + internId + '/plan');
+  const data = await res.json();
+  const stageNames = {onboarding:'入职适应',growth:'快速成长',independent:'独立贡献'};
+  let currentStage = '';
+
+  document.getElementById('mentorDetail').innerHTML = `
+    <button class="detail-back" onclick="loadMentorView()">← 返回列表</button>
+    <div class="detail-panel">
+      <h3>${data.intern_name} 的带教计划</h3>
+      <p class="detail-meta">${data.department}部</p>
+      ${data.items.map(it => {
+        let stageHeader = '';
+        if (it.stage !== currentStage) {
+          currentStage = it.stage;
+          stageHeader = `<h4 style="margin-top:16px;margin-bottom:8px;font-size:13px;color:var(--text-tertiary);">${stageNames[it.stage]||it.stage}</h4>`;
+        }
+        return stageHeader + `
+        <div class="plan-item">
+          <div class="plan-check ${it.status==='completed'?'done':''}" onclick="${it.status==='completed'?'':`openModal(${it.plan_id},${internId},'${it.milestone}')`}">${it.status==='completed'?'✓':''}</div>
+          <div class="plan-info">
+            <h4>${it.milestone}</h4>
+            <p>${it.description}</p>
+          </div>
+          ${it.feedback ? `<span class="plan-feedback">${it.feedback}</span>` : ''}
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+// ====== MODAL ======
+function openModal(planId, internId, milestoneName) {
+  pendingPlanId = planId;
+  pendingInternId = internId;
+  document.getElementById('modalTitle').textContent = '完成确认：' + milestoneName;
+  document.getElementById('modalFeedback').value = '';
+  document.getElementById('feedbackModal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('feedbackModal').classList.remove('active');
+  pendingPlanId = null;
+  pendingInternId = null;
+}
+
+async function confirmComplete() {
+  const feedback = document.getElementById('modalFeedback').value;
+  await fetch('/api/mentor/' + currentUser.id + '/complete/' + pendingPlanId, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({intern_id: pendingInternId, feedback: feedback})
+  });
+  closeModal();
+  openInternDetail(pendingInternId);
+}
+
+// ====== HR VIEW ======
+async function loadHRView() {
+  document.getElementById('viewHR').style.display = 'block';
+  const res = await fetch('/api/hr/dashboard');
+  hrData = await res.json();
+
+  // KPI cards
+  document.getElementById('kpiRow').innerHTML = `
+    <div class="kpi-card">
+      <div class="kpi-label">实习生总数</div>
+      <div class="kpi-value">${hrData.total}</div>
+      <div class="kpi-delta good">研发${hrData.dept_counts.find(d=>d.department==='研发')?.count||0} · 产品${hrData.dept_counts.find(d=>d.department==='产品')?.count||0} · 销售${hrData.dept_counts.find(d=>d.department==='销售')?.count||0}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">整体完成率</div>
+      <div class="kpi-value">${hrData.completion_rate}%</div>
+      <div class="kpi-delta ${hrData.completion_rate>50?'good':'warn'}">带教计划执行进度</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">入职适应中</div>
+      <div class="kpi-value">${hrData.stage_counts.find(s=>s.stage==='入职适应')?.count||0}</div>
+      <div class="kpi-delta ${(hrData.stage_counts.find(s=>s.stage==='入职适应')?.count||0)>8?'warn':'good'}">需重点关注</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">异常预警</div>
+      <div class="kpi-value" style="color:${hrData.anomaly_count>0?'var(--color-danger)':'var(--color-success)'}">${hrData.anomaly_count}</div>
+      <div class="kpi-delta ${hrData.anomaly_count>0?'bad':'good'}">入职超60天未转阶段</div>
+    </div>
+  `;
+
+  // Charts
+  renderHRCharts();
+
+  // Table
+  document.getElementById('hrTableBody').innerHTML = hrData.interns.map(i => `
+    <tr class="${i.anomaly?'anomaly':''}" style="cursor:pointer;" onclick="openHRDetail(${i.id})">
+      <td style="font-weight:500;">${i.name}</td>
+      <td>${i.position}</td>
+      <td>${i.department}</td>
+      <td><span class="status-badge ${i.stage==='入职适应'?'s-warn':i.stage==='独立贡献'?'s-ok':'s-ok'}">${i.stage}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="mini-bar" style="width:80px;"><div class="mini-fill" style="width:${i.progress_pct}%"></div></div>
+          <span style="font-size:12px;font-weight:600;">${i.progress_pct}%</span>
+        </div>
+      </td>
+      <td style="color:var(--text-secondary);">${i.start_date}</td>
+    </tr>
+  `).join('');
+}
+
+let hrCharts = {};
+function renderHRCharts() {
+  if (hrCharts.dept) hrCharts.dept.destroy();
+  if (hrCharts.stage) hrCharts.stage.destroy();
+
+  const deptCtx = document.getElementById('chartDept').getContext('2d');
+  hrCharts.dept = new Chart(deptCtx, {
+    type: 'doughnut',
+    data: {
+      labels: hrData.dept_counts.map(d => d.department),
+      datasets: [{
+        data: hrData.dept_counts.map(d => d.count),
+        backgroundColor: ['#0052d9','#366ef4','#85b0f9'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }
+    }
+  });
+
+  const stageCtx = document.getElementById('chartStage').getContext('2d');
+  hrCharts.stage = new Chart(stageCtx, {
+    type: 'bar',
+    data: {
+      labels: hrData.stage_counts.map(s => s.stage),
+      datasets: [{
+        label: '人数',
+        data: hrData.stage_counts.map(s => s.count),
+        backgroundColor: ['#e8f0fe','#0052d9','#00a870'],
+        borderRadius: 4,
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { grid: { color: '#f1f3f6' }, beginAtZero: true, ticks: { stepSize: 2 } }, x: { grid: { display: false } } }
+    }
+  });
+}
+
+async function openHRDetail(internId) {
+  const res = await fetch('/api/intern/' + internId);
+  const data = await res.json();
+  if (data.error) return;
+  const stageNames = {onboarding:'入职适应',growth:'快速成长',independent:'独立贡献'};
+  document.getElementById('hrDetail').style.display = 'block';
+  document.getElementById('hrDetail').innerHTML = `
+    <button class="detail-back" onclick="document.getElementById('hrDetail').style.display='none'">← 返回列表</button>
+    <div class="detail-panel">
+      <h3>${data.intern.name} · ${data.intern.department}部 · ${data.intern.position}</h3>
+      <p class="detail-meta">入职：${data.intern.start_date} · 当前阶段：${stageNames[data.intern.stage]||data.intern.stage} · 完成率：${data.progress_pct}%</p>
+      <div class="progress-bar-wrap" style="padding:12px 0;box-shadow:none;">
+        <div class="progress-bar"><div class="progress-fill" style="width:${data.progress_pct}%"></div></div>
+        <span class="progress-text">${data.completed_milestones}/${data.total_milestones}</span>
+      </div>
+      ${data.stages.map((stage,si) => `
+        <h4 style="margin-top:16px;font-size:14px;color:var(--text-primary);">${['入职适应','快速成长','独立贡献'][si]}</h4>
+        ${stage.items.map(it => `
+          <div class="milestone-item">
+            <div class="milestone-status ${it.status}">${it.status==='completed'?'✓':'○'}</div>
+            <div class="milestone-info">
+              <h4>${it.name}</h4>
+              <p>${it.description}</p>
+              ${it.feedback ? `<div class="milestone-feedback">导师反馈：${it.feedback}</div>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      `).join('')}
+    </div>
+  `;
+}
+
+// ====== START ======
+init();
+</script>
+</body>
+</html>

@@ -14,6 +14,6 @@
 - 主色 #0052d9，底色 #f5f7fa，卡片白 #ffffff
 - 字体 PingFang SC / Microsoft YaHei / system-ui
 - 圆角 6-12px，轻阴影
-- HTML 单文件离线可用，不依赖 CDN
+- 网络部署，CDN 可用
 - onclick 绑定，不 addEventListener
 - 无 emoji、无 AI 标签、无渐变泛滥

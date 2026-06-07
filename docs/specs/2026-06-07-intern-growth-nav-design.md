@@ -144,9 +144,9 @@ SQLite 数据库
 ## 技术栈
 
 - 后端：Python FastAPI + SQLAlchemy + SQLite
-- 前端：原生 HTML/CSS/JS，单文件离线可用
-- 图表：Chart.js（内嵌，不依赖 CDN）
-- 交付：`python main.py` 一键启动
+- 前端：原生 HTML/CSS/JS，部署到 Web 服务器
+- 图表：Chart.js（CDN 引入）
+- 交付：`python main.py` 一键启动，局域网可访问
 
 ## 非功能需求
 

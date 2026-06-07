@@ -1040,11 +1040,8 @@ function roleCard(title, sub, desc, key, hint) {
 }
 
 function openRolePicker(roleKey) {
-  // roleKey: 'in' | 'me' | 'hr' → 'intern' | 'mentor' | 'hr'
-  const roleMap = { 'in': 'intern', 'me': 'mentor', 'hr': 'hr' };
-  const roleReal = roleMap[roleKey];
-  const filtered = DEMO_ACCOUNTS.filter(a => a.role === roleReal);
-  const roleLabel = roleReal === 'intern' ? '实习生' : roleReal === 'mentor' ? '导师' : 'HR';
+  const filtered = DEMO_ACCOUNTS.filter(a => a.role === roleKey);
+  const roleLabel = roleKey === 'intern' ? '实习生' : roleKey === 'mentor' ? '导师' : 'HR';
 
   const list = el('div', { class: 'picker-list' },
     filtered.map(a => el('div', {

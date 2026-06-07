@@ -111,28 +111,64 @@ def seed_if_empty(conn):
         "INSERT INTO training_plan VALUES (?,?,?,?,?,?)", plans
     )
 
-    # Demo progress: complete ~40% of milestones with feedback
+    # Demo progress: 按阶段顺序生成进度——只有当前阶段全部完成，才解锁下一阶段
     feedbacks = ["完成得很好，继续保持","基础扎实，注意代码规范","需要加强沟通能力","进步明显，已经能独立完成任务","多加练习，这部分还不熟练","表现优秀，超出预期"]
     flog = []
+    stage_order = ["onboarding", "growth", "independent"]
+    stage_limits = {"onboarding": (2, 4), "growth": (0, 3), "independent": (0, 2)}
     import random
     random.seed(42)
     for iid in range(5, 25):
         dept = conn.execute("SELECT department FROM users WHERE id=?", (iid,)).fetchone()[0]
-        dept_plans = conn.execute(
-            "SELECT id FROM training_plan WHERE department=? ORDER BY sort_order", (dept,)
-        ).fetchall()
-        count = random.randint(3, min(8, len(dept_plans)))
-        for j, plan in enumerate(dept_plans[:count]):
-            mentor_id = conn.execute("SELECT mentor_id FROM users WHERE id=?", (iid,)).fetchone()[0]
-            day_offset = random.randint(1, 90)
-            ts = (base + timedelta(days=day_offset)).strftime("%Y-%m-%d %H:%M")
-            flog.append((iid, plan["id"], mentor_id, "completed",
-                         random.choice(feedbacks) if j % 3 != 0 else None, ts))
+        mentor_id = conn.execute("SELECT mentor_id FROM users WHERE id=?", (iid,)).fetchone()[0]
+        # 逐阶段：上一阶段全完成才生成下一阶段的进度
+        for stage in stage_order:
+            stage_plans = conn.execute(
+                "SELECT id FROM training_plan WHERE department=? AND stage=? ORDER BY sort_order",
+                (dept, stage)
+            ).fetchall()
+            lo, hi = stage_limits[stage]
+            complete_n = random.randint(lo, min(hi, len(stage_plans)))
+            for plan in stage_plans[:complete_n]:
+                day_offset = random.randint(1, 90)
+                ts = (base + timedelta(days=day_offset)).strftime("%Y-%m-%d %H:%M")
+                flog.append((iid, plan["id"], mentor_id, "completed",
+                             random.choice(feedbacks) if random.random() > 0.5 else None, ts))
+            # 只有本阶段全部完成，才继续生成下一阶段
+            if complete_n < len(stage_plans):
+                break
     conn.executemany(
         "INSERT INTO progress_log (intern_id,plan_id,mentor_id,status,mentor_feedback,created_at) VALUES (?,?,?,?,?,?)",
         flog
     )
     conn.commit()
+
+    # 根据实际完成进度设置正确的阶段
+    for iid in range(5, 25):
+        dept = conn.execute("SELECT department FROM users WHERE id=?", (iid,)).fetchone()[0]
+        current = "onboarding"
+        for stage in stage_order:
+            stage_plans = conn.execute(
+                "SELECT id FROM training_plan WHERE department=? AND stage=?", (dept, stage)
+            ).fetchall()
+            plan_ids = [p["id"] for p in stage_plans]
+            if not plan_ids:
+                continue
+            placeholders = ",".join("?" for _ in plan_ids)
+            completed = conn.execute(
+                f"SELECT COUNT(*) as cnt FROM progress_log WHERE intern_id=? AND plan_id IN ({placeholders}) AND status='completed'",
+                [iid] + plan_ids
+            ).fetchone()["cnt"]
+            if completed == len(plan_ids):
+                # 本阶段全完成，晋级
+                next_idx = stage_order.index(stage) + 1
+                current = stage_order[next_idx] if next_idx < len(stage_order) else stage
+            else:
+                current = stage
+                break
+        conn.execute("UPDATE users SET stage=? WHERE id=?", (current, iid))
+    conn.commit()
+    print(f"Seed: 24 users, 36 plans, {len(flog)} logs — stages aligned")
 
 # ============================================================
 # FastAPI
@@ -273,6 +309,23 @@ def complete_milestone(mentor_id: int, plan_id: int, data: dict):
     feedback = data.get("feedback", "")
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
 
+    # 校验：里程碑必须属于实习生当前阶段
+    intern = conn.execute("SELECT * FROM users WHERE id=? AND role='intern'", (intern_id,)).fetchone()
+    if not intern:
+        conn.close(); return JSONResponse({"error": "intern not found"}, 404)
+
+    plan = conn.execute("SELECT * FROM training_plan WHERE id=?", (plan_id,)).fetchone()
+    if not plan:
+        conn.close(); return JSONResponse({"error": "plan not found"}, 404)
+
+    if plan["stage"] != intern["stage"]:
+        conn.close()
+        return JSONResponse({"error": f"milestone belongs to '{plan['stage']}' but intern is in '{intern['stage']}'"}, 400)
+
+    if plan["department"] != intern["department"]:
+        conn.close()
+        return JSONResponse({"error": "milestone department mismatch"}, 400)
+
     existing = conn.execute(
         "SELECT id FROM progress_log WHERE intern_id=? AND plan_id=?",
         (intern_id, plan_id)
@@ -289,8 +342,31 @@ def complete_milestone(mentor_id: int, plan_id: int, data: dict):
             (intern_id, plan_id, mentor_id, "completed", feedback, now)
         )
     conn.commit()
+
+    # 检查阶段晋级
+    stage_order = ["onboarding", "growth", "independent"]
+    current_idx = stage_order.index(intern["stage"]) if intern["stage"] in stage_order else 0
+    advanced = None
+    if current_idx < len(stage_order) - 1:
+        current_stage_plans = conn.execute(
+            "SELECT id FROM training_plan WHERE department=? AND stage=?",
+            (intern["department"], intern["stage"])
+        ).fetchall()
+        plan_ids = [p["id"] for p in current_stage_plans]
+        if plan_ids:
+            placeholders = ",".join("?" for _ in plan_ids)
+            completed = conn.execute(
+                f"SELECT COUNT(*) as cnt FROM progress_log WHERE intern_id=? AND plan_id IN ({placeholders}) AND status='completed'",
+                [intern_id] + plan_ids
+            ).fetchone()["cnt"]
+            if completed == len(plan_ids):
+                next_stage = stage_order[current_idx + 1]
+                conn.execute("UPDATE users SET stage=? WHERE id=?", (next_stage, intern_id))
+                advanced = next_stage
+                conn.commit()
+
     conn.close()
-    return {"ok": True}
+    return {"ok": True, "stage_advanced": advanced}
 
 @app.get("/api/hr/dashboard")
 def hr_dashboard():
@@ -322,7 +398,8 @@ def hr_dashboard():
         if i["stage"] == "onboarding" and i["start_date"]:
             try:
                 sd = datetime.strptime(i["start_date"], "%Y-%m-%d")
-                if (datetime.now() - sd).days > 60:
+                days = (datetime.now() - sd).days
+                if days > 60 and pct < 30:
                     anomaly = True
                     anomaly_count += 1
             except:

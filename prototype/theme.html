@@ -7,6 +7,7 @@
 <style>
   :root {
     --warm-1: #fff3e0; --warm-2: #ffd9a8; --warm-3: #ff9a5a;
+    --line:   #ffe2b0;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   html,body {
@@ -69,6 +70,54 @@
     background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,0.6) 1px, transparent 0);
     background-size:2.5px 2.5px;
   }
+
+  /* ===========================================================
+   *  === 2D 人物动画层（SVG 线条风） ===
+   *  位置：覆盖在原图中心人物（明日香）位置
+   *  z-index=6：处于背景之上、UI 之下
+   * =========================================================== */
+  .char-layer {
+    position:fixed; inset:0; z-index:6; pointer-events:none;
+    overflow:hidden;
+  }
+  .char-svg {
+    position:absolute;
+    left:43%; top:54%;
+    transform:translate(-50%, -50%);
+    width:34vmin; height:68vmin;
+    max-width:420px; max-height:820px;
+    filter:
+      drop-shadow(0 0 6px rgba(255,180,120,0.55))
+      drop-shadow(0 0 18px rgba(255,130,70,0.35));
+    will-change:transform;
+  }
+  /* SVG 内部样式：纯线条风 */
+  .char-svg .s {
+    fill:none;
+    stroke:var(--line);
+    stroke-width:2.6;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    vector-effect:non-scaling-stroke;
+  }
+  .char-svg .s-thin { stroke-width:1.6; opacity:0.8; }
+  .char-svg .s-fill-soft { fill:rgba(20,6,16,0.55); stroke:var(--line); stroke-width:2.6; }
+  .char-svg .eye { stroke-width:2.6; }
+
+  /* idle 呼吸（整体 + 头发分开晃动） */
+  .anim-body { transform-origin:50% 100%; transform-box:fill-box; animation:bodyBreath 4.2s ease-in-out infinite; }
+  .anim-hair { transform-origin:50% 0%; transform-box:fill-box; animation:hairSway 5.5s ease-in-out infinite; }
+  @keyframes bodyBreath {
+    0%,100% { transform:scaleY(1) translateY(0); }
+    50%     { transform:scaleY(1.012) translateY(-0.4%); }
+  }
+  @keyframes hairSway {
+    0%,100% { transform:skewX(0deg) translateX(0); }
+    50%     { transform:skewX(-1.2deg) translateX(-0.6%); }
+  }
+
+  /* 手臂前伸预备（旅程时由 GSAP 直接接管） */
+  .arm-front { transform-origin:78% 32%; transform-box:fill-box; }
 
   /* === 边角 === */
   .corner {
@@ -158,6 +207,9 @@
   .end-mark { width:48px; height:1px; background:#8a5a30; margin-bottom:32px; opacity:0.4; }
   .end h1 { color:#1a0e1f; font-size:32px; font-weight:300; letter-spacing:0.5em; text-indent:0.5em; }
   .end .end-sub { color:#6a4a30; margin-top:18px; font-size:11px; letter-spacing:0.4em; opacity:0.6; }
+
+  /* === 旅程中：人物淡出收尾 === */
+  .char-layer.is-leaving { opacity:0; }
 </style>
 </head>
 <body>
@@ -167,6 +219,148 @@
 <div class="particles" id="particles"></div>
 <div class="vignette"></div>
 <div class="grain"></div>
+
+<!-- ============ 2D 人物动画层（SVG） ============ -->
+<div class="char-layer" id="charLayer">
+  <svg class="char-svg" id="charSvg" viewBox="0 0 400 760" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+    <!-- 身体 + 头 + 头发统一组（呼吸缩放） -->
+    <g class="anim-body">
+
+      <!-- 后发（长流苏） -->
+      <g class="anim-hair">
+        <path class="s s-fill-soft" d="
+          M 152 110
+          C 138 150, 130 230, 132 320
+          C 134 400, 130 480, 142 560
+          C 146 590, 152 620, 158 650
+          L 192 650
+          C 188 600, 184 540, 184 480
+          C 184 420, 186 360, 188 300
+          C 188 240, 190 180, 200 130
+          C 210 180, 212 240, 212 300
+          C 214 360, 216 420, 216 480
+          C 216 540, 212 600, 208 650
+          L 242 650
+          C 248 620, 254 590, 258 560
+          C 270 480, 266 400, 268 320
+          C 270 230, 262 150, 248 110
+          Z" />
+        <path class="s s-thin" d="M 168 180 C 162 280, 160 380, 168 500" />
+        <path class="s s-thin" d="M 200 170 C 198 280, 200 400, 200 520" />
+        <path class="s s-thin" d="M 232 180 C 238 280, 240 380, 232 500" />
+      </g>
+
+      <!-- 身体（红色驾驶服轮廓） -->
+      <path class="s s-fill-soft" d="
+        M 178 270
+        C 170 274, 164 286, 162 304
+        L 158 380
+        C 156 408, 162 432, 178 452
+        C 192 466, 208 470, 222 452
+        C 238 432, 244 408, 242 380
+        L 238 304
+        C 236 286, 230 274, 222 270
+        Z" />
+      <!-- 胸部高光线 -->
+      <path class="s s-thin" d="M 200 286 C 196 320, 196 360, 200 400" />
+      <path class="s s-thin" d="M 184 296 C 180 330, 180 370, 186 410" />
+      <path class="s s-thin" d="M 216 296 C 220 330, 220 370, 214 410" />
+      <!-- 腰部束线 -->
+      <path class="s s-thin" d="M 168 430 C 188 442, 212 442, 232 430" />
+      <!-- 锁骨小三角 -->
+      <path class="s s-thin" d="M 188 274 L 200 290 L 212 274" />
+
+      <!-- 后臂（垂于身侧） -->
+      <path class="s s-fill-soft" d="
+        M 230 286
+        C 246 296, 256 320, 260 354
+        C 262 388, 258 422, 252 450
+        C 248 462, 240 466, 234 458
+        C 232 432, 234 400, 232 372
+        C 230 344, 224 318, 218 304
+        Z" />
+
+      <!-- 头（椭圆） -->
+      <ellipse class="s s-fill-soft" cx="200" cy="180" rx="48" ry="60" />
+      <!-- 颈线 -->
+      <path class="s" d="M 188 234 L 188 256 L 212 256 L 212 234" />
+      <path class="s s-thin" d="M 188 246 C 196 252, 204 252, 212 246" />
+
+      <!-- 前发（刘海+鬓角） -->
+      <path class="s s-fill-soft" d="
+        M 152 162
+        C 154 142, 168 124, 200 122
+        C 232 124, 246 142, 248 162
+        C 248 168, 244 174, 240 174
+        C 232 152, 220 142, 208 142
+        C 200 156, 192 164, 180 168
+        C 170 172, 162 174, 158 174
+        C 154 174, 152 168, 152 162
+        Z" />
+      <path class="s s-thin" d="M 168 168 C 176 174, 188 174, 196 170" />
+      <path class="s s-thin" d="M 204 170 C 216 174, 226 172, 232 166" />
+
+      <!-- 眼睛（极简弧线） -->
+      <path class="s eye" d="M 178 188 C 182 192, 188 192, 192 188" />
+      <path class="s eye" d="M 208 188 C 212 192, 218 192, 222 188" />
+      <!-- 嘴 -->
+      <path class="s s-thin" d="M 196 210 L 204 210" />
+
+      <!-- 肩部铠甲小角 -->
+      <path class="s s-thin" d="M 168 274 L 160 280 L 168 286" />
+      <path class="s s-thin" d="M 232 274 L 240 280 L 232 286" />
+
+      <!-- ============ 前臂（可独立动画：伸出+放大） ============ -->
+      <g class="arm-front" id="charArmFront">
+        <!-- 上臂：自肩斜下前伸 -->
+        <path class="s s-fill-soft" d="
+          M 170 274
+          C 152 290, 138 318, 132 354
+          C 130 376, 132 400, 140 420
+          C 144 432, 154 438, 162 432
+          C 168 420, 168 400, 168 380
+          C 168 358, 172 336, 180 316
+          C 184 304, 188 294, 192 286
+          Z" />
+        <!-- 前臂：向下+前伸 -->
+        <path class="s s-fill-soft" d="
+          M 142 410
+          C 138 432, 140 456, 148 480
+          C 154 498, 164 510, 176 514
+          C 184 516, 192 512, 194 502
+          C 196 478, 192 452, 184 430
+          C 178 416, 168 410, 158 410
+          Z" />
+        <!-- 手：5 指轮廓 -->
+        <path class="s s-fill-soft" d="
+          M 162 502
+          C 152 504, 144 510, 140 522
+          C 138 532, 142 542, 152 546
+          C 156 540, 162 536, 168 536
+          C 170 542, 174 548, 180 550
+          C 188 552, 196 548, 200 540
+          C 202 534, 204 528, 204 522
+          C 204 514, 200 506, 192 502
+          Z" />
+        <!-- 手指分隔线 -->
+        <path class="s s-thin" d="M 156 524 L 156 542" />
+        <path class="s s-thin" d="M 168 522 L 168 544" />
+        <path class="s s-thin" d="M 180 520 L 180 546" />
+        <path class="s s-thin" d="M 192 522 L 192 542" />
+        <!-- 掌心纹 -->
+        <path class="s s-thin" d="M 168 538 C 176 540, 184 540, 192 538" />
+      </g>
+
+      <!-- 胸口发光核心（呼应伸出瞬间的能量） -->
+      <g id="charCore">
+        <circle class="s s-thin" cx="200" cy="332" r="6" />
+        <circle class="s s-thin" cx="200" cy="332" r="12" style="opacity:0" id="coreRing1" />
+        <circle class="s s-thin" cx="200" cy="332" r="22" style="opacity:0" id="coreRing2" />
+      </g>
+    </g>
+  </svg>
+</div>
+<!-- ======= 2D 人物层结束 ======= -->
 
 <div class="corner tl"></div>
 <div class="corner tr"></div>
@@ -237,6 +431,11 @@
     var endScreen=document.getElementById('endScreen');
     var stageEls=document.querySelectorAll('#stage .title, #stage .subtitle');
     var rays=document.querySelector('.light-rays');
+    var charLayer=document.getElementById('charLayer');
+    var charSvg=document.getElementById('charSvg');
+    var armFront=document.getElementById('charArmFront');
+    var coreRing1=document.getElementById('coreRing1');
+    var coreRing2=document.getElementById('coreRing2');
 
     btn.onclick=null;
     btn.style.pointerEvents='none';
@@ -272,20 +471,69 @@
       ease:'power1.in'
     },'<');
 
-    // 3. 高亮闪烁（人物"伸手"的瞬间感）
+    // === 2D 人物层：与背景同步推进 + 轻微放大 ===
+    tl.to(charSvg,{
+      duration:2.0,
+      scale:1.06,
+      ease:'power2.inOut'
+    },'<');
+
+    // 3. 高亮闪烁 + 人物"伸手"（同时发生）
+    // 3a. 手臂前伸 + 透视放大（核心动作）
+    tl.to(armFront,{
+      duration:0.55,
+      rotation:-12,                  // 抬起
+      scaleX:1.18, scaleY:1.18,
+      x:'-4%', y:'-6%',
+      transformOrigin:'78% 32%',
+      ease:'power2.out'
+    },'+=0.05');
+
+    tl.to(armFront,{
+      duration:0.45,
+      rotation:-18,
+      scaleX:1.55, scaleY:1.55,     // 手向镜头推近
+      x:'-18%', y:'-22%',
+      transformOrigin:'78% 32%',
+      ease:'power3.in'
+    });
+
+    // 3b. 胸口核心能量环扩散
+    tl.to(coreRing1,{duration:0.6, opacity:0.85, attr:{r:18}, ease:'power2.out'},'-=0.7');
+    tl.to(coreRing1,{duration:0.5, opacity:0, attr:{r:30}, ease:'power1.in'},'<+=0.15');
+    tl.to(coreRing2,{duration:0.7, opacity:0.6,  attr:{r:28}, ease:'power2.out'},'-=0.85');
+    tl.to(coreRing2,{duration:0.6, opacity:0, attr:{r:48}, ease:'power1.in'},'<+=0.2');
+
+    // 3c. 背景继续推向极值（手"触碰镜头"）
     tl.to(bg,{
-      duration:0.25,
-      filter:'contrast(1.25) saturate(1.4) brightness(1.8)',
+      duration:0.3,
+      scale:1.55,
+      x:'-10%', y:'-12%',
+      filter:'contrast(1.25) saturate(1.4) brightness(1.6)',
       ease:'power2.in'
-    },'+=0.15');
+    },'-=0.55');
+
     tl.to(bg,{
       duration:0.35,
-      filter:'contrast(1.25) saturate(1.4) brightness(2.8) blur(1.5px)',
+      filter:'contrast(1.25) saturate(1.4) brightness(2.6) blur(1.5px)',
       ease:'power2.in'
     });
 
-    // 4. 白色闪光
-    tl.to(flash,{duration:0.35, opacity:1, ease:'power2.in'});
+    // 3d. 人物层在最后时刻略放大（"手到你面前"的冲击）
+    tl.to(charSvg,{
+      duration:0.55,
+      scale:1.18,
+      ease:'power2.in'
+    },'-=0.85');
+
+    // 4. 人物层淡出 + 白色闪光
+    tl.to(charLayer,{
+      duration:0.25,
+      opacity:0,
+      ease:'power2.in'
+    },'-=0.25');
+
+    tl.to(flash,{duration:0.35, opacity:1, ease:'power2.in'},'-=0.05');
     tl.to(flash,{duration:0.2, opacity:0, ease:'none'});
 
     // 5. 结束页

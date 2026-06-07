@@ -833,8 +833,150 @@
     .hr-row .col-stage { display: none; }
   }
 </style>
+<!-- ====== 主题页 CSS（与现有设计隔离） ====== -->
+<style>
+  #themeOverlay {
+    position:fixed; inset:0; z-index:9999;
+    background:#0a0512;
+    font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+    color:#fff3e0; cursor:crosshair;
+    -webkit-font-smoothing:antialiased;
+    transition: opacity 0.6s ease;
+  }
+  #themeOverlay.hidden { opacity:0; pointer-events:none; }
+  #themeOverlay .bg-scene {
+    position:fixed; inset:-10%; z-index:1;
+    background-image:url('/bg.jpg');
+    background-size:cover; background-position:center;
+    filter:contrast(1.08) saturate(1.12) brightness(0.95);
+    will-change:transform;
+  }
+  #themeOverlay .bg-scene::after {
+    content:''; position:absolute; inset:0;
+    background:radial-gradient(ellipse 65% 45% at 50% 45%, transparent 30%, rgba(10,3,18,0.7) 100%);
+  }
+  #themeOverlay .light-rays {
+    position:fixed; inset:0; z-index:2; pointer-events:none;
+    background:radial-gradient(ellipse at 48% 42%, rgba(255,200,140,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 52% 38%, rgba(255,160,90,0.04) 0%, transparent 50%);
+    animation:rayPulse 4s ease-in-out infinite;
+  }
+  @keyframes rayPulse { 0%,100%{opacity:0.7} 50%{opacity:1} }
+  #themeOverlay .particles { position:fixed; inset:0; z-index:3; pointer-events:none; }
+  #themeOverlay .ptcl {
+    position:absolute; border-radius:50%;
+    background:#ffd9a0;
+    box-shadow:0 0 8px #ff9a5a, 0 0 20px rgba(255,140,60,0.3);
+    animation:floatUp linear infinite;
+  }
+  @keyframes floatUp {
+    0%{transform:translateY(0) scale(0.3); opacity:0}
+    5%{opacity:0.9}
+    85%{opacity:0.2}
+    100%{transform:translateY(-110vh) scale(1.2); opacity:0}
+  }
+  #themeOverlay .vignette {
+    position:fixed; inset:0; z-index:4; pointer-events:none;
+    background:radial-gradient(ellipse 75% 55% at center, transparent 15%, rgba(6,2,10,0.85) 100%);
+  }
+  #themeOverlay .grain {
+    position:fixed; inset:0; z-index:5; pointer-events:none; opacity:0.03;
+    background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,0.6) 1px, transparent 0);
+    background-size:2.5px 2.5px;
+  }
+  #themeOverlay .corner {
+    position:fixed; z-index:8; width:20px; height:20px;
+    border-color:#ff9a5a; opacity:0;
+    animation:fadeUp 1.6s ease 0.6s both;
+  }
+  #themeOverlay .corner.tl { top:28px; left:28px;  border-top:1px solid; border-left:1px solid; }
+  #themeOverlay .corner.tr { top:28px; right:28px; border-top:1px solid; border-right:1px solid; }
+  #themeOverlay .corner.bl { bottom:28px; left:28px;  border-bottom:1px solid; border-left:1px solid; }
+  #themeOverlay .corner.br { bottom:28px; right:28px; border-bottom:1px solid; border-right:1px solid; }
+  #themeOverlay .topbar {
+    position:fixed; top:0; left:0; right:0; z-index:8;
+    padding:12px 28px;
+    display:flex; align-items:center; justify-content:space-between;
+    background:linear-gradient(180deg, rgba(6,2,10,0.8) 0%, transparent 100%);
+    animation:fadeDown 1.3s ease 0.4s both;
+  }
+  #themeOverlay .topbar .brand { font-size:13px; font-weight:500; letter-spacing:0.12em; }
+  #themeOverlay .topbar .chapter { font-size:10px; opacity:0.5; letter-spacing:0.2em; }
+  #themeOverlay .stage {
+    position:fixed; inset:0; z-index:10;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    pointer-events:none;
+  }
+  #themeOverlay .title {
+    font-size:56px; font-weight:200; letter-spacing:0.4em; text-indent:0.4em;
+    animation:fadeUp 1.8s ease 0.9s both;
+    text-shadow:0 0 100px rgba(255,150,70,0.5), 0 0 40px rgba(255,100,40,0.3);
+  }
+  #themeOverlay .subtitle {
+    margin-top:14px;
+    font-size:11px; letter-spacing:0.55em; text-indent:0.55em;
+    opacity:0; color:#ffd9a8;
+    animation:fadeUp 1.8s ease 1.3s both;
+  }
+  #themeOverlay .btn-start {
+    margin-top:56px;
+    padding:15px 60px;
+    border:1px solid rgba(255,180,120,0.35);
+    background:rgba(15,4,10,0.65); backdrop-filter:blur(10px);
+    color:#fff3e0; font-size:15px; font-weight:300; letter-spacing:0.35em;
+    cursor:pointer; pointer-events:auto; font-family:inherit; border-radius:2px;
+    animation:fadeUp 1.8s ease 1.7s both,
+               breathing 3.5s ease-in-out 2s infinite;
+    transition:all 0.35s;
+  }
+  #themeOverlay .btn-start:hover {
+    background:rgba(255,140,60,0.18);
+    border-color:rgba(255,170,110,0.7);
+    box-shadow:0 0 50px rgba(255,120,60,0.3), 0 0 100px rgba(255,100,40,0.15);
+    transform:scale(1.03);
+  }
+  @keyframes breathing {
+    0%,100%{box-shadow:0 0 24px rgba(255,120,60,0.18), inset 0 0 10px rgba(255,150,100,0.08)}
+    50%{box-shadow:0 0 56px rgba(255,120,60,0.4), inset 0 0 20px rgba(255,150,100,0.2)}
+  }
+  @keyframes fadeUp{from{opacity:0;transform:translateY(36px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeDown{from{opacity:0;transform:translateY(-24px)}to{opacity:1;transform:translateY(0)}}
+  #themeOverlay .hint {
+    position:fixed; bottom:36px; left:50%; transform:translateX(-50%);
+    z-index:8; font-size:10px; letter-spacing:0.28em;
+    opacity:0; color:rgba(255,200,160,0.45);
+    animation:fadeUp 1.8s ease 2.1s both;
+  }
+  #themeOverlay .flash {
+    position:fixed; inset:0; z-index:50; background:white; opacity:0; pointer-events:none;
+  }
+</style>
 </head>
 <body>
+
+<!-- ====== 主题页 ====== -->
+<div id="themeOverlay">
+  <div class="bg-scene" id="themeBg"></div>
+  <div class="light-rays"></div>
+  <div class="particles" id="themeParticles"></div>
+  <div class="vignette"></div>
+  <div class="grain"></div>
+  <div class="corner tl"></div>
+  <div class="corner tr"></div>
+  <div class="corner bl"></div>
+  <div class="corner br"></div>
+  <div class="topbar">
+    <span class="brand">实习生成长导航</span>
+    <span class="chapter">CHAPTER 00 · 启程</span>
+  </div>
+  <div class="stage">
+    <h1 class="title">启 程</h1>
+    <div class="subtitle">A JOURNEY OF GROWTH</div>
+    <button class="btn-start" id="btnStart" onclick="startJourney()">开始旅途</button>
+  </div>
+  <div class="hint">移动鼠标 · 探索视差</div>
+  <div class="flash" id="flash"></div>
+</div>
 
 <!-- 顶栏 -->
 <header class="topbar">
@@ -854,6 +996,55 @@
 
 <div id="toast" class="toast"><span class="toast-glyph"></span><span id="toastText"></span></div>
 <div id="modalRoot"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script>
+/* ====== 主题页逻辑 ====== */
+(function(){
+  var pc=document.getElementById('themeParticles');
+  for(var i=0;i<60;i++){
+    var p=document.createElement('div');p.className='ptcl';
+    p.style.left=(Math.random()*100)+'%';p.style.bottom='0';
+    p.style.animationDuration=(5+Math.random()*14)+'s';
+    p.style.animationDelay=Math.random()*10+'s';
+    var s=1+Math.random()*2.5;p.style.width=s+'px';p.style.height=s+'px';
+    pc.appendChild(p);
+  }
+  var bg=document.getElementById('themeBg');
+  var mx=0,my=0,smx=0,smy=0;
+  window.onmousemove=function(e){
+    mx=(e.clientX/window.innerWidth-0.5)*2;
+    my=(e.clientY/window.innerHeight-0.5)*2;
+  };
+  function anim(){
+    smx+=(mx-smx)*0.035;smy+=(my-smy)*0.035;
+    bg.style.transform='translate('+(smx*30)+'px, '+(smy*22)+'px)';
+    requestAnimationFrame(anim);
+  }
+  anim();
+  window.startJourney=function(){
+    var btn=document.getElementById('btnStart');
+    var flash=document.getElementById('flash');
+    var overlay=document.getElementById('themeOverlay');
+    var stageEls=document.querySelectorAll('#themeOverlay .title, #themeOverlay .subtitle');
+    btn.onclick=null;btn.style.pointerEvents='none';
+    var tl=gsap.timeline();
+    tl.to(btn,{duration:0.45,opacity:0,scale:0.88,ease:'power2.in'});
+    tl.to(stageEls,{duration:0.55,opacity:0,y:-35,stagger:0.08,ease:'power2.in'},'<');
+    tl.to('#themeOverlay .hint, #themeOverlay .topbar, #themeOverlay .corner',{duration:0.55,opacity:0,ease:'power1.in'},'<');
+    tl.to(bg,{duration:2.0,scale:1.42,x:'-4%',y:'-5%',filter:'contrast(1.15) saturate(1.25) brightness(1.05)',ease:'power2.inOut'},'-=0.1');
+    tl.to('#themeOverlay .light-rays',{duration:2.0,opacity:1.6,ease:'power1.in'},'<');
+    tl.to('#themeOverlay .vignette',{duration:2.0,opacity:0.45,ease:'power1.in'},'<');
+    tl.to(bg,{duration:0.25,filter:'contrast(1.25) saturate(1.4) brightness(1.8)',ease:'power2.in'},'+=0.15');
+    tl.to(bg,{duration:0.35,filter:'contrast(1.25) saturate(1.4) brightness(2.8) blur(1.5px)',ease:'power2.in'});
+    tl.to(flash,{duration:0.35,opacity:1,ease:'power2.in'});
+    tl.to(flash,{duration:0.2,opacity:0,ease:'none'});
+    tl.to(overlay,{duration:0.6,opacity:0,ease:'power2.out'});
+    tl.set(overlay,{style:'display:none'});
+    renderLogin();
+  };
+})();
+</script>
 
 <script>
 /* ============================================================

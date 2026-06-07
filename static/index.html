@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>实习生成长导航</title>
+<style>
+  /* ============================================================
+     设计系统
+     隐喻：成长旅程 / 黎明 / 营地
+     ============================================================ */
+  :root {
+    /* 暖纸感基础 */
+    --paper: #faf6ef;          /* 主底色：温暖纸张 */
+    --paper-deep: #f1ebe0;     /* 凹陷表面 */
+    --card: #ffffff;
+    --ink: #2a2520;            /* 主文字：暖墨色 */
+    --ink-soft: #6f665d;       /* 次文字 */
+    --ink-mute: #a39e98;       /* 静文字 */
+    --ink-faint: #c8c0b3;      /* 极淡文字 */
+
+    /* 边框：whisper */
+    --line: rgba(42, 37, 32, 0.08);
+    --line-soft: rgba(42, 37, 32, 0.05);
+    --line-strong: rgba(42, 37, 32, 0.16);
+
+    /* 旅程主题色（单一主调，黎明 + 营火） */
+    --ember: #c65d2e;          /* 旅程主色：赭石/营火 */
+    --ember-soft: #e8a87a;     /* 浅赭 */
+    --ember-glow: #fbe8d8;     /* 极浅赭，背景光晕 */
+    --forest: #3a8c6f;         /* 成长/完成：森林绿 */
+    --forest-soft: #d4e8df;
+    --rust: #b83a2f;           /* 警示：铁锈红 */
+    --slate: #5a6b7c;          /* 导师/HR 冷静辅色 */
+    --slate-soft: #e3e7ec;
+
+    /* 字体 */
+    --font-sans: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", "Hiragino Sans GB", sans-serif;
+    --font-mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+
+    /* 节奏 */
+    --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px;
+    --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px;
+
+    /* 圆角 */
+    --r-sm: 6px; --r-md: 10px; --r-lg: 16px; --r-pill: 9999px;
+
+    /* 阴影：4 层极轻 */
+    --shadow-1: 0 1px 2px rgba(42, 37, 32, 0.04);
+    --shadow-2: 0 1px 2px rgba(42, 37, 32, 0.04),
+                0 4px 12px rgba(42, 37, 32, 0.05),
+                0 12px 32px rgba(42, 37, 32, 0.04);
+    --shadow-3: 0 1px 2px rgba(42, 37, 32, 0.06),
+                0 6px 16px rgba(42, 37, 32, 0.07),
+                0 20px 48px rgba(42, 37, 32, 0.08);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "kern", "liga";
+  }
+  button { font-family: inherit; cursor: pointer; }
+  a { color: var(--ember); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ============================================================
+     通用工具
+     ============================================================ */
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 var(--s5); }
+  .row { display: flex; gap: var(--s4); align-items: center; }
+  .row-between { display: flex; justify-content: space-between; align-items: center; }
+  .col { display: flex; flex-direction: column; gap: var(--s3); }
+  .muted { color: var(--ink-soft); }
+  .mute { color: var(--ink-mute); }
+  .mono { font-family: var(--font-mono); font-size: 13px; }
+  .hidden { display: none !important; }
+
+  /* 按钮 */
+  .btn {
+    display: inline-flex; align-items: center; gap: var(--s2);
+    padding: 10px 18px; border-radius: var(--r-sm);
+    border: 1px solid var(--line-strong); background: var(--card);
+    color: var(--ink); font-size: 14px; font-weight: 500;
+    transition: all .15s ease;
+  }
+  .btn:hover { background: var(--paper-deep); border-color: var(--ink-soft); }
+  .btn-primary {
+    background: var(--ember); color: #fff; border-color: var(--ember);
+  }
+  .btn-primary:hover { background: #b14e23; border-color: #b14e23; }
+  .btn-ghost { background: transparent; border-color: transparent; }
+  .btn-ghost:hover { background: var(--paper-deep); }
+  .btn-sm { padding: 6px 12px; font-size: 13px; }
+
+  /* 卡片 */
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--r-md); box-shadow: var(--shadow-1);
+  }
+  .card-pad { padding: var(--s5); }
+  .card-pad-lg { padding: var(--s6); }
+
+  /* 标签 */
+  .tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px; border-radius: var(--r-pill);
+    font-size: 12px; font-weight: 500; letter-spacing: 0.02em;
+    background: var(--paper-deep); color: var(--ink-soft);
+  }
+  .tag-ember { background: var(--ember-glow); color: var(--ember); }
+  .tag-forest { background: var(--forest-soft); color: var(--forest); }
+  .tag-slate { background: var(--slate-soft); color: var(--slate); }
+  .tag-rust { background: #f5dcd6; color: var(--rust); }
+
+  /* ============================================================
+     顶栏
+     ============================================================ */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(250, 246, 239, 0.85);
+    backdrop-filter: saturate(150%) blur(8px);
+    -webkit-backdrop-filter: saturate(150%) blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: var(--s2);
+    font-weight: 600; font-size: 15px; letter-spacing: -0.01em;
+  }
+  .brand-mark {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--ember);
+    position: relative;
+    display: inline-block;
+  }
+  .brand-mark::after {
+    content: ""; position: absolute; inset: 5px;
+    border-radius: 50%; background: var(--ember-glow);
+  }
+  .topbar-right { display: flex; align-items: center; gap: var(--s3); }
+  .who { font-size: 13px; color: var(--ink-soft); }
+  .who b { color: var(--ink); font-weight: 600; }
+
+  /* ============================================================
+     登录页
+     ============================================================ */
+  .login-hero {
+    padding: var(--s8) 0 var(--s7);
+    text-align: center;
+  }
+  .login-hero h1 {
+    font-size: 44px; font-weight: 600; line-height: 1.15;
+    margin: 0 0 var(--s3); letter-spacing: -0.02em;
+  }
+  .login-hero h1 em {
+    font-style: normal; color: var(--ember);
+    border-bottom: 2px solid var(--ember-glow);
+  }
+  .login-hero p {
+    font-size: 16px; color: var(--ink-soft);
+    max-width: 520px; margin: 0 auto;
+  }
+
+  .role-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: var(--s4); margin-top: var(--s7);
+  }
+  .role-card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--r-lg); padding: var(--s6);
+    text-align: left; cursor: pointer;
+    transition: all .2s ease;
+    box-shadow: var(--shadow-1);
+  }
+  .role-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-2);
+    border-color: var(--ember-soft);
+  }
+  .role-card .glyph {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--ember-glow); color: var(--ember);
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-bottom: var(--s4);
+    font-size: 18px; font-weight: 600;
+    font-family: var(--font-mono);
+  }
+  .role-card h3 {
+    font-size: 20px; font-weight: 600; margin: 0 0 var(--s2);
+    letter-spacing: -0.01em;
+  }
+  .role-card p {
+    font-size: 14px; color: var(--ink-soft);
+    margin: 0 0 var(--s4); line-height: 1.55;
+  }
+  .role-card .open-hint {
+    font-size: 13px; color: var(--ember); font-weight: 500;
+  }
+
+  /* 身份选择面板（弹层式） */
+  .picker {
+    position: fixed; inset: 0;
+    background: rgba(42, 37, 32, 0.32);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100; padding: var(--s5);
+    animation: fade .18s ease;
+  }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  .picker-panel {
+    background: var(--card); border-radius: var(--r-lg);
+    width: 100%; max-width: 460px;
+    box-shadow: var(--shadow-3);
+    overflow: hidden;
+    animation: lift .22s cubic-bezier(.2,.8,.3,1.2);
+  }
+  @keyframes lift { from { transform: translateY(8px); opacity: 0; } }
+  .picker-head {
+    padding: var(--s5) var(--s5) var(--s4);
+    border-bottom: 1px solid var(--line);
+  }
+  .picker-head h2 {
+    margin: 0 0 var(--s1); font-size: 18px; font-weight: 600;
+  }
+  .picker-head p {
+    margin: 0; font-size: 13px; color: var(--ink-soft);
+  }
+  .picker-list {
+    padding: var(--s3); max-height: 360px; overflow-y: auto;
+  }
+  .picker-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: var(--s3) var(--s4); border-radius: var(--r-sm);
+    cursor: pointer; transition: background .12s;
+  }
+  .picker-item:hover { background: var(--paper-deep); }
+  .picker-item .name { font-weight: 500; }
+  .picker-item .sub { font-size: 12px; color: var(--ink-soft); }
+  .picker-foot {
+    padding: var(--s3) var(--s5);
+    border-top: 1px solid var(--line);
+    text-align: right;
+  }
+
+  /* ============================================================
+     实习生页面 — 核心：成长旅程
+     ============================================================ */
+  .journey-header {
+    padding: var(--s7) 0 var(--s5);
+  }
+  .journey-greeting {
+    display: flex; align-items: baseline; gap: var(--s3);
+    margin-bottom: var(--s2);
+  }
+  .journey-greeting .day-pill {
+    font-size: 12px; padding: 3px 10px; border-radius: var(--r-pill);
+    background: var(--paper-deep); color: var(--ink-soft);
+    font-weight: 500;
+  }
+  .journey-h1 {
+    font-size: 32px; font-weight: 600; margin: 0 0 var(--s3);
+    letter-spacing: -0.015em; line-height: 1.2;
+  }
+  .journey-h1 em { font-style: normal; color: var(--ember); }
+  .journey-sub {
+    font-size: 15px; color: var(--ink-soft);
+    max-width: 640px; line-height: 1.65;
+  }
+
+  /* 进度叙事条 */
+  .progress-narrative {
+    display: flex; align-items: center; gap: var(--s5);
+    padding: var(--s4) var(--s5);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    margin-top: var(--s5);
+  }
+  .pn-stat { display: flex; flex-direction: column; gap: 2px; }
+  .pn-stat .num {
+    font-size: 28px; font-weight: 600; color: var(--ink);
+    line-height: 1; font-family: var(--font-mono);
+    letter-spacing: -0.02em;
+  }
+  .pn-stat .num em {
+    font-style: normal; color: var(--ink-mute);
+    font-size: 18px; font-weight: 500;
+  }
+  .pn-stat .lbl { font-size: 12px; color: var(--ink-soft); }
+  .pn-divider {
+    width: 1px; height: 36px; background: var(--line);
+  }
+  .pn-pulse {
+    flex: 1; display: flex; align-items: center; gap: var(--s3);
+  }
+  .pulse-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--ember);
+    position: relative;
+  }
+  .pulse-dot::before {
+    content: ""; position: absolute; inset: -4px;
+    border-radius: 50%; background: var(--ember);
+    opacity: 0.25; animation: pulse 1.8s ease-out infinite;
+  }
+  @keyframes pulse {
+    0% { transform: scale(0.6); opacity: 0.4; }
+    100% { transform: scale(2.2); opacity: 0; }
+  }
+  .pulse-text { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+  .pulse-text b { color: var(--ink); font-weight: 600; }
+
+  /* SVG 旅程路径 */
+  .journey-path {
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    padding: var(--s6) var(--s5) var(--s5);
+    margin-top: var(--s5);
+    box-shadow: var(--shadow-1);
+    overflow: hidden;
+  }
+  .journey-path::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 600px 200px at 30% 80%, var(--ember-glow), transparent 60%);
+    pointer-events: none;
+  }
+  .journey-path-inner { position: relative; z-index: 1; }
+  .journey-svg {
+    width: 100%; height: 180px; display: block;
+  }
+  .stage-labels {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    margin-top: var(--s3); position: relative;
+  }
+  .stage-label {
+    text-align: center;
+    transition: all .2s;
+  }
+  .stage-label .stage-no {
+    font-family: var(--font-mono);
+    font-size: 11px; color: var(--ink-mute);
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .stage-label .stage-name {
+    font-size: 15px; font-weight: 600;
+    color: var(--ink); margin: 4px 0 2px;
+  }
+  .stage-label .stage-state {
+    font-size: 12px; color: var(--ink-soft);
+  }
+  .stage-label.is-current .stage-name { color: var(--ember); }
+  .stage-label.is-done .stage-state { color: var(--forest); }
+
+  /* 营地锚点（在 SVG 上） */
+  .camp-anchor { cursor: pointer; }
+  .camp-anchor:hover .camp-circle { stroke-width: 3; }
+  .camp-circle {
+    transition: all .25s ease;
+  }
+  .camp-current { fill: var(--ember); }
+  .camp-done { fill: var(--forest); }
+  .camp-pending { fill: var(--card); }
+  .camp-flare { fill: var(--ember-glow); }
+
+  /* 阶段详情 */
+  .stage-detail {
+    margin-top: var(--s5);
+    padding-top: var(--s5);
+    border-top: 1px dashed var(--line);
+  }
+  .stage-detail-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: var(--s4);
+  }
+  .stage-detail-head h2 {
+    font-size: 22px; font-weight: 600; margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .stage-detail-head .stage-progress {
+    font-family: var(--font-mono); font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  /* 里程碑列表（垂直、像路上的站点） */
+  .milestone-list {
+    display: flex; flex-direction: column; gap: var(--s2);
+  }
+  .milestone {
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    gap: var(--s4);
+    padding: var(--s4) var(--s5);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    transition: all .18s ease;
+    align-items: start;
+  }
+  .milestone:hover { box-shadow: var(--shadow-2); border-color: var(--line-strong); }
+
+  .ms-marker {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 14px; font-weight: 500;
+    flex-shrink: 0;
+  }
+  .ms-marker.completed { background: var(--forest); color: #fff; }
+  .ms-marker.flagged { background: var(--rust); color: #fff; }
+  .ms-marker.pending {
+    background: transparent; color: var(--ink-mute);
+    border: 1.5px dashed var(--ink-faint);
+  }
+  .ms-marker.current {
+    background: var(--ember-glow); color: var(--ember);
+    border: 1.5px solid var(--ember);
+  }
+
+  .ms-body { min-width: 0; }
+  .ms-name {
+    font-size: 15px; font-weight: 600; color: var(--ink);
+    margin: 0 0 2px;
+  }
+  .ms-desc { font-size: 13px; color: var(--ink-soft); }
+  .ms-feedback {
+    margin-top: var(--s3); padding: var(--s3) var(--s4);
+    background: var(--paper-deep); border-radius: var(--r-sm);
+    font-size: 13px; color: var(--ink-soft);
+    border-left: 2px solid var(--ember-soft);
+    line-height: 1.6;
+  }
+  .ms-feedback .fb-by {
+    font-size: 11px; color: var(--ink-mute);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 4px; display: block;
+  }
+
+  .ms-meta {
+    font-family: var(--font-mono); font-size: 12px;
+    color: var(--ink-mute); white-space: nowrap;
+    padding-top: 8px;
+  }
+
+  /* 反馈流（路上的指引） */
+  .feedback-stream {
+    margin-top: var(--s6);
+  }
+  .feedback-stream h3 {
+    font-size: 16px; font-weight: 600; margin: 0 0 var(--s3);
+    display: flex; align-items: center; gap: var(--s2);
+  }
+  .feedback-stream h3 .count {
+    font-family: var(--font-mono); font-size: 12px;
+    color: var(--ink-mute); font-weight: 500;
+  }
+  .feedback-list { display: flex; flex-direction: column; gap: var(--s2); }
+  .feedback-row {
+    display: flex; gap: var(--s3);
+    padding: var(--s3) var(--s4);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+  }
+  .feedback-row .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--ember); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; flex-shrink: 0;
+  }
+  .feedback-row .fb-content { flex: 1; }
+  .feedback-row .fb-text {
+    font-size: 14px; color: var(--ink); line-height: 1.6;
+  }
+  .feedback-row .fb-meta {
+    font-size: 12px; color: var(--ink-mute);
+    margin-top: 4px;
+  }
+  .feedback-row .fb-meta .ms-link {
+    color: var(--ember); font-weight: 500;
+  }
+
+  /* ============================================================
+     导师页面
+     ============================================================ */
+  .page-h {
+    padding: var(--s6) 0 var(--s5);
+  }
+  .page-h h1 {
+    font-size: 28px; font-weight: 600; margin: 0 0 var(--s2);
+    letter-spacing: -0.015em;
+  }
+  .page-h p { color: var(--ink-soft); margin: 0; }
+
+  .intern-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--s4);
+    margin-top: var(--s5);
+  }
+  .intern-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    padding: var(--s5);
+    cursor: pointer;
+    transition: all .18s ease;
+  }
+  .intern-card:hover {
+    box-shadow: var(--shadow-2);
+    border-color: var(--ember-soft);
+    transform: translateY(-1px);
+  }
+  .ic-top {
+    display: flex; align-items: center; gap: var(--s3);
+    margin-bottom: var(--s4);
+  }
+  .ic-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--ember-glow); color: var(--ember);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 600; flex-shrink: 0;
+  }
+  .ic-name { font-size: 16px; font-weight: 600; }
+  .ic-pos { font-size: 13px; color: var(--ink-soft); }
+  .ic-progress {
+    display: flex; align-items: baseline; gap: 4px;
+    margin-bottom: var(--s2);
+  }
+  .ic-progress .pct {
+    font-family: var(--font-mono);
+    font-size: 22px; font-weight: 600; color: var(--ink);
+  }
+  .ic-progress .lbl {
+    font-size: 12px; color: var(--ink-soft);
+  }
+  .ic-bar {
+    height: 4px; background: var(--paper-deep);
+    border-radius: 2px; overflow: hidden;
+  }
+  .ic-bar-fill {
+    height: 100%; background: var(--ember);
+    border-radius: 2px; transition: width .4s ease;
+  }
+  .ic-meta {
+    display: flex; gap: var(--s2); margin-top: var(--s3);
+  }
+
+  /* 导师 — 计划详情 */
+  .plan-back {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--ink-soft);
+    margin-bottom: var(--s3); cursor: pointer;
+    background: none; border: none; padding: 0;
+  }
+  .plan-back:hover { color: var(--ember); }
+  .plan-header {
+    display: flex; align-items: baseline; gap: var(--s3);
+    margin-bottom: var(--s5);
+  }
+  .plan-header h1 {
+    font-size: 28px; font-weight: 600; margin: 0;
+    letter-spacing: -0.015em;
+  }
+  .plan-section {
+    margin-top: var(--s5);
+  }
+  .plan-section h2 {
+    display: flex; align-items: center; gap: var(--s3);
+    font-size: 16px; font-weight: 600;
+    margin: 0 0 var(--s3);
+    color: var(--ink-soft);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    font-size: 12px; font-weight: 600;
+  }
+  .plan-section h2 .badge {
+    background: var(--ember-glow); color: var(--ember);
+    padding: 2px 10px; border-radius: var(--r-pill);
+    font-size: 12px; font-weight: 500;
+    letter-spacing: normal; text-transform: none;
+  }
+  .plan-item {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    gap: var(--s4);
+    padding: var(--s4) var(--s5);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    align-items: start;
+    margin-bottom: var(--s2);
+  }
+  .pi-check {
+    width: 22px; height: 22px; border-radius: 6px;
+    border: 1.5px solid var(--line-strong);
+    background: var(--card); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s; margin-top: 2px;
+    flex-shrink: 0;
+  }
+  .pi-check:hover { border-color: var(--ember); }
+  .pi-check.is-done { background: var(--forest); border-color: var(--forest); }
+  .pi-check.is-done::after {
+    content: ""; width: 6px; height: 10px;
+    border-right: 2px solid #fff; border-bottom: 2px solid #fff;
+    transform: rotate(45deg) translate(-1px, -1px);
+  }
+  .pi-body { min-width: 0; }
+  .pi-name { font-weight: 600; font-size: 15px; }
+  .pi-name.is-done { color: var(--ink-mute); text-decoration: line-through; text-decoration-color: var(--ink-faint); }
+  .pi-desc { font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
+  .pi-feedback-box {
+    margin-top: var(--s3); display: flex; gap: var(--s2);
+  }
+  .pi-feedback-box input {
+    flex: 1; padding: 8px 12px;
+    border: 1px solid var(--line); border-radius: var(--r-sm);
+    background: var(--paper); font-family: inherit; font-size: 13px;
+    color: var(--ink);
+  }
+  .pi-feedback-box input:focus { outline: none; border-color: var(--ember); }
+  .pi-actions { display: flex; align-items: center; gap: var(--s2); }
+  .pi-save {
+    padding: 8px 14px;
+    background: var(--ember); color: #fff; border: none;
+    border-radius: var(--r-sm); font-size: 13px; font-weight: 500;
+  }
+  .pi-save:disabled { background: var(--ink-faint); cursor: not-allowed; }
+  .pi-save:hover:not(:disabled) { background: #b14e23; }
+  .pi-fb-display {
+    margin-top: var(--s2); font-size: 13px; color: var(--ink-soft);
+    background: var(--paper-deep); padding: var(--s2) var(--s3);
+    border-radius: var(--r-sm);
+    border-left: 2px solid var(--forest);
+  }
+
+  /* ============================================================
+     HR 页面
+     ============================================================ */
+  .hr-stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: var(--s3); margin-top: var(--s5);
+  }
+  .hr-stat {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    padding: var(--s4) var(--s5);
+  }
+  .hr-stat .label {
+    font-size: 12px; color: var(--ink-soft);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .hr-stat .value {
+    font-family: var(--font-mono);
+    font-size: 28px; font-weight: 600; color: var(--ink);
+    line-height: 1.1;
+  }
+  .hr-stat .value small {
+    font-size: 14px; color: var(--ink-mute); font-weight: 500;
+  }
+  .hr-stat .delta {
+    font-size: 12px; color: var(--ink-soft);
+    margin-top: 4px;
+  }
+  .hr-stat.accent .value { color: var(--ember); }
+  .hr-stat.alert .value { color: var(--rust); }
+
+  .hr-2col {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: var(--s4); margin-top: var(--s5);
+  }
+  .hr-panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    padding: var(--s5);
+  }
+  .hr-panel h2 {
+    font-size: 14px; font-weight: 600; margin: 0 0 var(--s4);
+    color: var(--ink-soft);
+  }
+
+  .bar-row {
+    display: grid; grid-template-columns: 80px 1fr 40px;
+    gap: var(--s3); align-items: center; margin-bottom: var(--s3);
+  }
+  .bar-row .lbl { font-size: 13px; color: var(--ink); }
+  .bar-row .count { font-family: var(--font-mono); font-size: 13px; color: var(--ink-soft); text-align: right; }
+  .bar-track {
+    height: 8px; background: var(--paper-deep);
+    border-radius: 4px; overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%; background: var(--ember);
+    border-radius: 4px; transition: width .5s ease;
+  }
+  .bar-fill.slate { background: var(--slate); }
+  .bar-fill.forest { background: var(--forest); }
+
+  .hr-table {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    margin-top: var(--s5);
+    overflow: hidden;
+  }
+  .hr-table-head {
+    display: grid;
+    grid-template-columns: 1.4fr 1.2fr 1fr 0.8fr 0.8fr;
+    padding: var(--s3) var(--s5);
+    background: var(--paper-deep);
+    font-size: 12px; color: var(--ink-soft);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+  .hr-row {
+    display: grid;
+    grid-template-columns: 1.4fr 1.2fr 1fr 0.8fr 0.8fr;
+    padding: var(--s3) var(--s5);
+    border-top: 1px solid var(--line);
+    font-size: 14px; align-items: center;
+    cursor: pointer; transition: background .12s;
+  }
+  .hr-row:hover { background: var(--paper); }
+  .hr-row .pct {
+    font-family: var(--font-mono); font-size: 13px;
+    color: var(--ink); font-weight: 500;
+  }
+  .hr-row .anomaly-dot {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%; background: var(--rust);
+    margin-right: 6px; vertical-align: middle;
+  }
+  .hr-row .name-cell { font-weight: 500; }
+  .hr-row .name-cell small { display: block; color: var(--ink-mute); font-weight: 400; font-size: 12px; }
+
+  /* ============================================================
+     通用：空/加载/庆祝
+     ============================================================ */
+  .empty {
+    text-align: center; padding: var(--s7) var(--s5);
+    color: var(--ink-soft);
+  }
+  .empty h3 { color: var(--ink); font-weight: 600; margin: 0 0 var(--s2); }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: #fff;
+    padding: 12px 20px; border-radius: var(--r-sm);
+    font-size: 14px; opacity: 0; pointer-events: none;
+    transition: all .25s ease;
+    z-index: 200; box-shadow: var(--shadow-3);
+  }
+  .toast.show {
+    opacity: 1; transform: translateX(-50%) translateY(0);
+  }
+  .toast .toast-glyph {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%; background: var(--forest);
+    margin-right: 8px; vertical-align: middle;
+  }
+
+  /* 庆祝小弹层（点击"庆祝一下"时） */
+  .celebrate {
+    position: fixed; inset: 0;
+    background: rgba(42, 37, 32, 0.4);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200; padding: var(--s5);
+    animation: fade .2s ease;
+  }
+  .celebrate-panel {
+    background: var(--card); border-radius: var(--r-lg);
+    padding: var(--s7); text-align: center;
+    max-width: 360px; box-shadow: var(--shadow-3);
+    animation: lift .25s cubic-bezier(.2,.8,.3,1.2);
+  }
+  .celebrate-sun {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--ember); margin: 0 auto var(--s4);
+    position: relative;
+  }
+  .celebrate-sun::after {
+    content: ""; position: absolute; inset: -8px;
+    border-radius: 50%; border: 2px solid var(--ember-soft);
+    animation: sunRing 1.6s ease-out infinite;
+  }
+  @keyframes sunRing {
+    0% { transform: scale(0.8); opacity: 0.8; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+  .celebrate-panel h3 {
+    font-size: 22px; font-weight: 600; margin: 0 0 var(--s2);
+    letter-spacing: -0.01em;
+  }
+  .celebrate-panel p {
+    color: var(--ink-soft); margin: 0 0 var(--s5);
+    line-height: 1.6;
+  }
+
+  /* 响应 */
+  @media (max-width: 900px) {
+    .role-grid { grid-template-columns: 1fr; }
+    .hr-stats { grid-template-columns: repeat(2, 1fr); }
+    .hr-2col { grid-template-columns: 1fr; }
+    .stage-labels { grid-template-columns: 1fr; gap: var(--s3); }
+    .journey-svg { display: none; }
+    .plan-item, .milestone {
+      grid-template-columns: 28px 1fr;
+    }
+    .ms-meta, .pi-actions { grid-column: 1 / -1; }
+    .hr-table-head, .hr-row {
+      grid-template-columns: 1.4fr 0.8fr 0.6fr;
+    }
+    .hr-table-head .col-dept,
+    .hr-table-head .col-stage,
+    .hr-row .col-dept,
+    .hr-row .col-stage { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 顶栏 -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="brand">
+      <span class="brand-mark"></span>
+      <span>实习生成长导航</span>
+    </div>
+    <div class="topbar-right" id="topbarRight">
+      <span class="who" id="who"></span>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">切换身份</button>
+    </div>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<div id="toast" class="toast"><span class="toast-glyph"></span><span id="toastText"></span></div>
+<div id="modalRoot"></div>
+
+<script>
+/* ============================================================
+   状态与 API
+   ============================================================ */
+const STAGE_ORDER = ['onboarding', 'growth', 'independent'];
+const STAGE_NAME = {
+  'onboarding': '入职适应',
+  'growth': '快速成长',
+  'independent': '独立贡献'
+};
+const STAGE_BLURB = {
+  'onboarding': '熟悉环境，建立基础',
+  'growth': '独立承担任务，加速成长',
+  'independent': '成为模块负责人，影响业务'
+};
+const STATUS_NAME = { 'pending': '待完成', 'completed': '已完成', 'flagged': '需关注' };
+
+let state = {
+  user: null,        // { id, name, role, ... }
+  current: 'login',  // 'login' | 'intern' | 'mentor' | 'hr' | 'mentorPlan' | 'hrIntern'
+  data: {}
+};
+
+const api = {
+  me:  (id)        => fetch(`/api/me?user_id=${id}`).then(r => r.json()),
+  intern:      (id) => fetch(`/api/intern/${id}`).then(r => r.json()),
+  mentorList:  (id) => fetch(`/api/mentor/${id}/interns`).then(r => r.json()),
+  mentorPlan:  (mid, iid) => fetch(`/api/mentor/${mid}/intern/${iid}/plan`).then(r => r.json()),
+  complete:    (mid, pid, body) =>
+    fetch(`/api/mentor/${mid}/complete/${pid}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(r => r.json()),
+  hrDash:      ()   => fetch(`/api/hr/dashboard`).then(r => r.json())
+};
+
+/* ============================================================
+   工具
+   ============================================================ */
+const $ = (sel) => document.querySelector(sel);
+const el = (tag, attrs = {}, children = []) => {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') node.className = v;
+    else if (k === 'onclick') node.setAttribute('onclick', v);
+    else if (k === 'html') node.innerHTML = v;
+    else if (k === 'text') node.textContent = v;
+    else if (k.startsWith('data-')) node.setAttribute(k, v);
+    else if (k === 'style') node.setAttribute('style', v);
+    else node.setAttribute(k, v);
+  }
+  for (const c of [].concat(children)) {
+    if (c == null) continue;
+    if (typeof c === 'string') node.appendChild(document.createTextNode(c));
+    else node.appendChild(c);
+  }
+  return node;
+};
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const fmtPct = (n) => `${n}%`;
+const initials = (name) => {
+  if (!name) return '?';
+  return name.length > 2 ? name.slice(-1) : name.slice(0, 1);
+};
+const daySince = (startDate) => {
+  if (!startDate) return 0;
+  const start = new Date(startDate);
+  const now = new Date();
+  return Math.max(0, Math.floor((now - start) / 86400000));
+};
+const stageName = (key) => STAGE_NAME[key] || key;
+const sortStages = (arr) =>
+  arr.slice().sort((a, b) =>
+    STAGE_ORDER.indexOf(a.stage_key) - STAGE_ORDER.indexOf(b.stage_key)
+  );
+
+function toast(text) {
+  const t = $('#toast');
+  $('#toastText').textContent = text;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function modal(node) {
+  const root = $('#modalRoot');
+  root.innerHTML = '';
+  const overlay = el('div', { class: 'picker', onclick: (e) => {
+    if (e.target === overlay) close();
+  }});
+  overlay.appendChild(node);
+  root.appendChild(overlay);
+}
+function close() { $('#modalRoot').innerHTML = ''; }
+
+function celebrate(text, sub) {
+  const panel = el('div', { class: 'celebrate-panel' }, [
+    el('div', { class: 'celebrate-sun' }),
+    el('h3', { text }),
+    el('p', { text: sub }),
+    el('button', { class: 'btn btn-primary', onclick: close, text: '继续旅程' })
+  ]);
+  const overlay = el('div', { class: 'celebrate', onclick: (e) => {
+    if (e.target === overlay) close();
+  }});
+  overlay.appendChild(panel);
+  $('#modalRoot').innerHTML = '';
+  $('#modalRoot').appendChild(overlay);
+}
+
+/* ============================================================
+   路由
+   ============================================================ */
+async function setUser(user) {
+  state.user = user;
+  $('#who').innerHTML = `<b>${esc(user.name)}</b> · ${user.role === 'intern' ? '实习生' : user.role === 'mentor' ? '导师' : 'HR'}`;
+  if (user.role === 'intern') {
+    state.current = 'intern';
+    await renderIntern();
+  } else if (user.role === 'mentor') {
+    state.current = 'mentor';
+    await renderMentor();
+  } else {
+    state.current = 'hr';
+    await renderHR();
+  }
+}
+function logout() {
+  state.user = null;
+  state.current = 'login';
+  renderLogin();
+}
+
+/* ============================================================
+   登录页
+   ============================================================ */
+const DEMO_ACCOUNTS = [
+  { id: 1,  role: 'hr',      name: '王芳',  subtitle: '人力资源 · 全局视角' },
+  { id: 2,  role: 'mentor',  name: '张伟',  subtitle: '研发部导师 · 带 8 人' },
+  { id: 3,  role: 'mentor',  name: '李明',  subtitle: '产品部导师 · 带 6 人' },
+  { id: 4,  role: 'mentor',  name: '陈芳',  subtitle: '销售部导师 · 带 6 人' },
+  { id: 5,  role: 'intern',  name: '赵一',  subtitle: '研发 · 后端开发 · 入职第 ' + daySince('2026-03-01') + ' 天' },
+  { id: 13, role: 'intern',  name: '冯九',  subtitle: '产品 · 产品助理 · 入职第 ' + daySince('2026-03-09') + ' 天' },
+  { id: 19, role: 'intern',  name: '韩十五', subtitle: '销售 · 大客户销售 · 入职第 ' + daySince('2026-03-15') + ' 天' }
+];
+
+function renderLogin() {
+  const app = $('#app');
+  app.innerHTML = '';
+
+  const roleGrid = el('div', { class: 'role-grid' }, [
+    roleCard('实习生', '我是新人', '我想看看自己的成长旅程', 'in', '实习生 · 看自己的旅程'),
+    roleCard('导师',   '我带实习生', '查看我带的所有实习生 + 带教计划', 'me', '导师 · 看我的实习生'),
+    roleCard('HR',     '我负责全局', '整体实习生分布、阶段、异常', 'hr', 'HR · 全局总览')
+  ]);
+
+  const hero = el('section', { class: 'login-hero' }, [
+    el('div', { class: 'wrap' }, [
+      el('h1', { html: '实习生的成长<em>不是报表</em>，是一条路' }),
+      el('p', { text: '选择你的角色进入。每一步都看得见，每一次完成都算数。' })
+    ])
+  ]);
+
+  app.appendChild(hero);
+  app.appendChild(el('div', { class: 'wrap' }, [roleGrid]));
+}
+
+function roleCard(title, sub, desc, key, hint) {
+  return el('div', { class: 'role-card', onclick: () => openRolePicker(key) }, [
+    el('div', { class: 'glyph', text: key === 'in' ? '01' : key === 'me' ? '02' : '03' }),
+    el('h3', { text: title }),
+    el('p', { text: sub + '。' + desc }),
+    el('div', { class: 'open-hint', text: hint + ' →' })
+  ]);
+}
+
+function openRolePicker(roleKey) {
+  const filtered = DEMO_ACCOUNTS.filter(a => a.role === roleKey);
+  const roleLabel = roleKey === 'in' ? '实习生' : roleKey === 'me' ? '导师' : 'HR';
+
+  const list = el('div', { class: 'picker-list' },
+    filtered.map(a => el('div', {
+      class: 'picker-item', onclick: () => pickUser(a.id)
+    }, [
+      el('div', {}, [
+        el('div', { class: 'name', text: a.name }),
+        el('div', { class: 'sub', text: a.subtitle })
+      ]),
+      el('div', { class: 'sub', text: 'id: ' + a.id })
+    ]))
+  );
+
+  const panel = el('div', { class: 'picker-panel' }, [
+    el('div', { class: 'picker-head' }, [
+      el('h2', { text: '选择' + roleLabel + '身份' }),
+      el('p', { text: '演示账号直接进入。' })
+    ]),
+    list,
+    el('div', { class: 'picker-foot' }, [
+      el('button', { class: 'btn btn-ghost btn-sm', onclick: close, text: '取消' })
+    ])
+  ]);
+
+  modal(panel);
+}
+
+async function pickUser(id) {
+  close();
+  const me = await api.me(id);
+  if (me.error) { toast('未找到该用户'); return; }
+  await setUser(me);
+}
+
+/* ============================================================
+   实习生视图
+   ============================================================ */
+async function renderIntern() {
+  const data = await api.intern(state.user.id);
+  state.data.intern = data;
+  const app = $('#app');
+  app.innerHTML = '';
+
+  const stages = sortStages(data.stages);
+  const total = data.total_milestones;
+  const done = data.completed_milestones;
+  const pct = data.progress_pct;
+  const days = daySince(data.intern.start_date);
+
+  // 找 current stage（数据中 "进行中" 的）
+  let currentStageKey = data.intern.stage;
+  // 找第一个还没全完成的 stage
+  for (const s of stages) {
+    const allDone = s.milestones.every(m => m.status === 'completed');
+    if (!allDone) { currentStageKey = s.stage_key; break; }
+  }
+
+  // 顶部问候
+  const greeting = el('div', { class: 'journey-header' }, [
+    el('div', { class: 'wrap' }, [
+      el('div', { class: 'journey-greeting' }, [
+        el('span', { class: 'day-pill', text: '入职第 ' + days + ' 天' }),
+        el('span', { class: 'tag tag-ember', text: data.intern.department + ' · ' + data.intern.position })
+      ]),
+      el('h1', { class: 'journey-h1', html: `${esc(data.intern.name)}，欢迎回到你的<em>成长旅程</em>` }),
+      el('p', { class: 'journey-sub', text:
+        `你已经走过了 ${done} 个站点，路上还有 ${total - done} 个在等着你。当前正处在「${stageName(currentStageKey)}」阶段——继续前进，每一步都在为独立那一天做准备。`
+      }),
+      buildProgressNarrative(done, total, pct, currentStageKey)
+    ])
+  ]);
+
+  // SVG 路径
+  const path = buildJourneyPath(stages, currentStageKey, data);
+
+  app.appendChild(greeting);
+  app.appendChild(el('div', { class: 'wrap' }, [
+    path,
+    ...stages.map(s => buildStageDetail(s, currentStageKey))
+  ]));
+
+  // 反馈流（从 milestones 抽出所有有 feedback 的）
+  const feedbackItems = [];
+  for (const s of stages) {
+    for (const m of s.milestones) {
+      if (m.status === 'completed' && m.feedback) {
+        feedbackItems.push({ ...m, stageKey: s.stage_key, stageName: s.stage_key });
+      }
+    }
+  }
+  if (feedbackItems.length) {
+    const stream = el('div', { class: 'feedback-stream' }, [
+      el('h3', {}, [
+        document.createTextNode('路上的指引'),
+        el('span', { class: 'count', text: ' · ' + feedbackItems.length + ' 条反馈' })
+      ]),
+      el('div', { class: 'feedback-list' },
+        feedbackItems.map(it => buildFeedbackRow(it))
+      )
+    ]);
+    app.appendChild(el('div', { class: 'wrap' }, [stream]));
+  }
+}
+
+function buildProgressNarrative(done, total, pct, currentKey) {
+  const remaining = total - done;
+  let next = '';
+  if (remaining === 0) next = '旅程的全部站点已点亮——准备好迎接下一段吧。';
+  else if (remaining === 1) next = '只剩最后 1 个站点就到下一段。';
+  else next = `距下一段还有 ${remaining} 步`;
+
+  return el('div', { class: 'progress-narrative' }, [
+    el('div', { class: 'pn-stat' }, [
+      el('div', { class: 'num', html: `${done}<em>/${total}</em>` }),
+      el('div', { class: 'lbl', text: '已走过' })
+    ]),
+    el('div', { class: 'pn-divider' }),
+    el('div', { class: 'pn-stat' }, [
+      el('div', { class: 'num', html: `${pct}<em>%</em>` }),
+      el('div', { class: 'lbl', text: '完成度' })
+    ]),
+    el('div', { class: 'pn-divider' }),
+    el('div', { class: 'pn-pulse' }, [
+      el('div', { class: 'pulse-dot' }),
+      el('div', { class: 'pulse-text' }, [
+        document.createTextNode('正在 '),
+        el('b', { text: stageName(currentKey) }),
+        document.createTextNode(' 阶段，' + next)
+      ])
+    ])
+  ]);
+}
+
+function buildJourneyPath(stages, currentKey, data) {
+  // SVG：三条 S 曲线连接三个营地
+  // 视口宽按 wrap-1200 减去 padding，cap 到 1100
+  const W = 1100, H = 180;
+  const cx = (i) => 180 + i * (W - 360) / 2;
+
+  // 重算每段 y 交替
+  const ys = [60, 110, 60];
+  const d = (() => {
+    let s = `M ${cx(0)} ${ys[0]}`;
+    for (let i = 0; i < stages.length - 1; i++) {
+      const x1 = cx(i), x2 = cx(i + 1);
+      const y1 = ys[i], y2 = ys[i + 1];
+      const mx = x1 + (x2 - x1) * 0.5;
+      s += ` C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
+    }
+    return s;
+  })();
+
+  // 已走过的路径（基于每个阶段的完成度）
+  let walkedD = '';
+  let walkedSoFar = true;
+  for (let i = 0; i < stages.length; i++) {
+    const s = stages[i];
+    const allDone = s.milestones.every(m => m.status === 'completed');
+    const anyDone = s.milestones.some(m => m.status === 'completed');
+    if (walkedSoFar && allDone) {
+      // 整段走过
+      if (i === 0) walkedD = `M ${cx(0)} ${ys[0]}`;
+      else walkedD += ` C ${cx(i-1) + (cx(i)-cx(i-1))*0.5} ${ys[i-1]}, ${cx(i-1) + (cx(i)-cx(i-1))*0.5} ${ys[i]}, ${cx(i)} ${ys[i]}`;
+    } else {
+      walkedSoFar = false;
+      break;
+    }
+  }
+
+  // 渲染 SVG
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'journey-svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+  // 虚线路径
+  const ghost = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  ghost.setAttribute('d', d);
+  ghost.setAttribute('fill', 'none');
+  ghost.setAttribute('stroke', 'rgba(42, 37, 32, 0.18)');
+  ghost.setAttribute('stroke-width', '2');
+  ghost.setAttribute('stroke-dasharray', '4 6');
+  ghost.setAttribute('stroke-linecap', 'round');
+  svg.appendChild(ghost);
+
+  // 已走过的实线路径
+  if (walkedD) {
+    const walked = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    walked.setAttribute('d', walkedD);
+    walked.setAttribute('fill', 'none');
+    walked.setAttribute('stroke', 'var(--ember)');
+    walked.setAttribute('stroke-width', '2.5');
+    walked.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(walked);
+  }
+
+  // 营地（每个阶段的视觉锚点）
+  for (let i = 0; i < stages.length; i++) {
+    const s = stages[i];
+    const x = cx(i), y = ys[i];
+    const isCurrent = s.stage_key === currentKey;
+    const allDone = s.milestones.every(m => m.status === 'completed');
+    const anyDone = s.milestones.some(m => m.status === 'completed');
+    const allPending = s.milestones.every(m => m.status === 'pending');
+
+    // 外圈光晕（current 阶段）
+    if (isCurrent) {
+      const flare = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      flare.setAttribute('cx', x); flare.setAttribute('cy', y);
+      flare.setAttribute('r', 26);
+      flare.setAttribute('fill', 'var(--ember-glow)');
+      flare.setAttribute('opacity', '0.6');
+      flare.setAttribute('class', 'camp-flare');
+      svg.appendChild(flare);
+    }
+
+    // 主圈
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'camp-anchor');
+    g.setAttribute('onclick', `jumpToStage('${s.stage_key}')`);
+
+    const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    c.setAttribute('cx', x); c.setAttribute('cy', y);
+    c.setAttribute('r', 14);
+    c.setAttribute('class', 'camp-circle ' + (allDone ? 'camp-done' : isCurrent ? 'camp-current' : 'camp-pending'));
+    c.setAttribute('stroke', allDone ? 'var(--forest)' : isCurrent ? 'var(--ember)' : 'var(--ink-faint)');
+    c.setAttribute('stroke-width', '2');
+    g.appendChild(c);
+
+    // 内部数字
+    const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    t.setAttribute('x', x); t.setAttribute('y', y + 4);
+    t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('font-family', 'ui-monospace, SF Mono, Menlo, monospace');
+    t.setAttribute('font-size', '12');
+    t.setAttribute('font-weight', '600');
+    t.setAttribute('fill', allDone ? '#fff' : isCurrent ? '#fff' : 'var(--ink-mute)');
+    t.textContent = String(i + 1);
+    g.appendChild(t);
+
+    // 阶段完成小计
+    const sub = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    const doneN = s.milestones.filter(m => m.status === 'completed').length;
+    sub.setAttribute('x', x); sub.setAttribute('y', y + (isCurrent ? 44 : 38));
+    sub.setAttribute('text-anchor', 'middle');
+    sub.setAttribute('font-family', 'ui-monospace, SF Mono, Menlo, monospace');
+    sub.setAttribute('font-size', '11');
+    sub.setAttribute('fill', 'var(--ink-mute)');
+    sub.textContent = doneN + '/' + s.milestones.length;
+    g.appendChild(sub);
+
+    svg.appendChild(g);
+  }
+
+  const labels = el('div', { class: 'stage-labels' },
+    stages.map((s, i) => {
+      const isCurrent = s.stage_key === currentKey;
+      const allDone = s.milestones.every(m => m.status === 'completed');
+      return el('div', {
+        class: 'stage-label' + (isCurrent ? ' is-current' : '') + (allDone ? ' is-done' : '')
+      }, [
+        el('div', { class: 'stage-no', text: '0' + (i + 1) }),
+        el('div', { class: 'stage-name', text: stageName(s.stage_key) }),
+        el('div', { class: 'stage-state', text:
+          allDone ? '已完成' : isCurrent ? STAGE_BLURB[s.stage_key] : '尚未开始'
+        })
+      ]);
+    })
+  );
+
+  return el('div', { class: 'journey-path' }, [
+    el('div', { class: 'journey-path-inner' }, [svg, labels])
+  ]);
+}
+
+function jumpToStage(key) {
+  const node = document.getElementById('stage-' + key);
+  if (node) node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function buildStageDetail(stage, currentKey) {
+  const isCurrent = stage.stage_key === currentKey;
+  const doneN = stage.milestones.filter(m => m.status === 'completed').length;
+
+  // 找第一个 pending 的里程碑（仅 current 阶段）
+  let currentIdx = -1;
+  if (isCurrent) {
+    for (let i = 0; i < stage.milestones.length; i++) {
+      if (stage.milestones[i].status === 'pending') { currentIdx = i; break; }
+    }
+  }
+
+  return el('div', { class: 'stage-detail', id: 'stage-' + stage.stage_key }, [
+    el('div', { class: 'stage-detail-head' }, [
+      el('h2', { text: stageName(stage.stage_key) + ' · ' + STAGE_BLURB[stage.stage_key] }),
+      el('div', { class: 'stage-progress', text: doneN + ' / ' + stage.milestones.length + ' 已完成' })
+    ]),
+    el('div', { class: 'milestone-list' },
+      stage.milestones.map((m, i) => buildMilestone(m, i, isCurrent, i === currentIdx))
+    )
+  ]);
+}
+
+function buildMilestone(m, i, stageIsCurrent, isCurrentPending) {
+  let markerClass = 'ms-marker';
+  let markerContent = String(i + 1);
+  if (m.status === 'completed') {
+    markerClass += ' completed';
+    markerContent = '\u2713';  // ✓
+  } else if (m.status === 'flagged') {
+    markerClass += ' flagged';
+    markerContent = '!';
+  } else if (isCurrentPending) {
+    markerClass += ' current';
+    markerContent = String(i + 1);
+  } else {
+    markerClass += ' pending';
+    markerContent = String(i + 1);
+  }
+
+  return el('div', { class: 'milestone' }, [
+    el('div', { class: markerClass, text: markerContent }),
+    el('div', { class: 'ms-body' }, [
+      el('div', { class: 'ms-name', text: m.name }),
+      el('div', { class: 'ms-desc', text: m.description }),
+      m.feedback ? el('div', { class: 'ms-feedback' }, [
+        el('span', { class: 'fb-by', text: '来自导师的反馈' }),
+        document.createTextNode(m.feedback)
+      ]) : null
+    ]),
+    el('div', { class: 'ms-meta', text: STATUS_NAME[m.status] || m.status })
+  ]);
+}
+
+function buildFeedbackRow(item) {
+  return el('div', { class: 'feedback-row' }, [
+    el('div', { class: 'avatar', text: initials(state.user.name) }),
+    el('div', { class: 'fb-content' }, [
+      el('div', { class: 'fb-text', text: item.feedback }),
+      el('div', { class: 'fb-meta' }, [
+        document.createTextNode(stageName(item.stageKey) + ' · '),
+        el('span', { class: 'ms-link', text: item.name })
+      ])
+    ])
+  ]);
+}
+
+/* ============================================================
+   导师视图
+   ============================================================ */
+async function renderMentor() {
+  const interns = await api.mentorList(state.user.id);
+  const app = $('#app');
+  app.innerHTML = '';
+
+  const header = el('section', { class: 'page-h' }, [
+    el('div', { class: 'wrap' }, [
+      el('h1', { text: '我的实习生' }),
+      el('p', { text: `${state.user.name}，你正带着 ${interns.length} 位同学。点击卡片查看带教计划。` })
+    ])
+  ]);
+
+  const grid = el('div', { class: 'intern-grid' },
+    interns.map(i => el('div', { class: 'intern-card', onclick: () => openPlan(i.id) }, [
+      el('div', { class: 'ic-top' }, [
+        el('div', { class: 'ic-avatar', text: initials(i.name) }),
+        el('div', {}, [
+          el('div', { class: 'ic-name', text: i.name }),
+          el('div', { class: 'ic-pos', text: i.department + ' · ' + i.position })
+        ])
+      ]),
+      el('div', { class: 'ic-progress' }, [
+        el('div', { class: 'pct', text: i.progress_pct + '%' }),
+        el('div', { class: 'lbl', text: '· ' + i.completed + '/' + i.total })
+      ]),
+      el('div', { class: 'ic-bar' }, [
+        el('div', { class: 'ic-bar-fill', style: 'width:' + i.progress_pct + '%' })
+      ]),
+      el('div', { class: 'ic-meta' }, [
+        el('span', { class: 'tag ' + (i.stage === 'onboarding' ? 'tag-ember' : i.stage === 'growth' ? 'tag-slate' : 'tag-forest'),
+          text: stageName(i.stage) })
+      ])
+    ]))
+  );
+
+  app.appendChild(header);
+  app.appendChild(el('div', { class: 'wrap' }, [
+    grid,
+    el('div', { style: 'margin-top:32px;', onclick: 'noop()' }, [])
+  ]));
+}
+
+async function openPlan(internId) {
+  const data = await api.mentorPlan(state.user.id, internId);
+  state.data.plan = { ...data, internId };
+  state.current = 'mentorPlan';
+  renderPlan();
+}
+
+function renderPlan() {
+  const data = state.data.plan;
+  const app = $('#app');
+  app.innerHTML = '';
+
+  // 按 stage 分组
+  const groups = {};
+  for (const it of data.items) {
+    if (!groups[it.stage]) groups[it.stage] = [];
+    groups[it.stage].push(it);
+  }
+
+  const header = el('div', { class: 'wrap' }, [
+    el('button', { class: 'plan-back', onclick: () => { state.current = 'mentor'; renderMentor(); } }, [
+      document.createTextNode('← 返回实习生列表')
+    ]),
+    el('div', { class: 'plan-header' }, [
+      el('h1', { text: data.intern_name + ' 的带教计划' }),
+      el('span', { class: 'tag tag-ember', text: data.department })
+    ])
+  ]);
+
+  const sections = el('div', { class: 'wrap' },
+    STAGE_ORDER.filter(k => groups[k]).map(k => buildPlanSection(k, groups[k], data.internId))
+  );
+
+  app.appendChild(header);
+  app.appendChild(sections);
+}
+
+function buildPlanSection(stageKey, items, internId) {
+  return el('div', { class: 'plan-section' }, [
+    el('h2', {}, [
+      el('span', { class: 'badge', text: '0' + (STAGE_ORDER.indexOf(stageKey) + 1) }),
+      document.createTextNode(stageName(stageKey) + ' · ' + items.length + ' 个里程碑')
+    ]),
+    el('div', {},
+      items.map(it => buildPlanItem(it, internId))
+    )
+  ]);
+}
+
+function buildPlanItem(it, internId) {
+  const isDone = it.status === 'completed';
+  const hasFeedback = it.feedback;
+
+  const item = el('div', { class: 'plan-item' }, [
+    el('div', {
+      class: 'pi-check' + (isDone ? ' is-done' : ''),
+      onclick: () => toggleCheck(it.plan_id, internId, !isDone)
+    }),
+    el('div', { class: 'pi-body' }, [
+      el('div', { class: 'pi-name' + (isDone ? ' is-done' : ''), text: it.milestone }),
+      el('div', { class: 'pi-desc', text: it.description }),
+      hasFeedback ? el('div', { class: 'pi-fb-display', text: '导师反馈：' + it.feedback }) : null
+    ]),
+    el('div', { class: 'pi-actions' }, [
+      el('button', { class: 'pi-save', onclick: () => openFeedbackEditor(it.plan_id, internId), text: hasFeedback ? '编辑反馈' : '写反馈' })
+    ])
+  ]);
+  return item;
+}
+
+function openFeedbackEditor(planId, internId) {
+  const item = state.data.plan.items.find(x => x.plan_id === planId);
+  const cur = item ? (item.feedback || '') : '';
+  const input = el('input', { type: 'text', value: cur, placeholder: '给实习生的反馈…' });
+  const save = el('button', { class: 'pi-save', text: '保存' });
+
+  const panel = el('div', { class: 'picker-panel' }, [
+    el('div', { class: 'picker-head' }, [
+      el('h2', { text: '导师反馈' }),
+      el('p', { text: '写下你的观察和鼓励——一句话就够。' })
+    ]),
+    el('div', { style: 'padding:16px 20px;' }, [
+      el('div', { style: 'font-weight:600; margin-bottom:8px;', text: item ? item.milestone : '' }),
+      el('div', { class: 'pi-feedback-box', style: 'margin-top:0;' }, [input, save])
+    ]),
+    el('div', { class: 'picker-foot' }, [
+      el('button', { class: 'btn btn-ghost btn-sm', onclick: close, text: '取消' })
+    ])
+  ]);
+  modal(panel);
+
+  save.onclick = async () => {
+    const fb = input.value.trim();
+    save.disabled = true;
+    save.textContent = '保存中…';
+    await api.complete(state.user.id, planId, { intern_id: internId, feedback: fb });
+    close();
+    toast('反馈已保存');
+    await openPlan(internId);
+  };
+  setTimeout(() => input.focus(), 50);
+}
+
+async function toggleCheck(planId, internId, toDone) {
+  if (!toDone) {
+    toast('已完成的里程碑不支持取消');
+    return;
+  }
+  // 找已存在的反馈
+  const it = state.data.plan.items.find(x => x.plan_id === planId);
+  const fb = it && it.feedback ? it.feedback : '';
+  await api.complete(state.user.id, planId, { intern_id: internId, feedback: fb });
+  toast('已标记完成');
+  await openPlan(internId);
+}
+
+/* ============================================================
+   HR 视图
+   ============================================================ */
+async function renderHR() {
+  const data = await api.hrDash();
+  state.data.hr = data;
+  const app = $('#app');
+  app.innerHTML = '';
+
+  const header = el('section', { class: 'page-h' }, [
+    el('div', { class: 'wrap' }, [
+      el('h1', { text: '全局总览' }),
+      el('p', { text: '快速了解本批实习生的整体节奏、阶段分布，以及需要关注的异常。' })
+    ])
+  ]);
+
+  // 4 个核心指标
+  const stats = el('div', { class: 'hr-stats' }, [
+    el('div', { class: 'hr-stat' }, [
+      el('div', { class: 'label', text: '实习生总数' }),
+      el('div', { class: 'value', text: String(data.total) }),
+      el('div', { class: 'delta', text: '本批次' })
+    ]),
+    el('div', { class: 'hr-stat accent' }, [
+      el('div', { class: 'label', text: '平均完成度' }),
+      el('div', { class: 'value', html: data.completion_rate + '<small>%</small>' }),
+      el('div', { class: 'delta', text: '全量平均' })
+    ]),
+    el('div', { class: 'hr-stat' }, [
+      el('div', { class: 'label', text: '已到独立阶段' }),
+      el('div', { class: 'value', text: String((data.stage_counts.find(s => s.stage === '独立贡献') || {count: 0}).count) }),
+      el('div', { class: 'delta', text: '可承担模块' })
+    ]),
+    el('div', { class: 'hr-stat' + (data.anomaly_count > 0 ? ' alert' : '') }, [
+      el('div', { class: 'label', text: '异常' }),
+      el('div', { class: 'value', text: String(data.anomaly_count) }),
+      el('div', { class: 'delta', text: '入职超 60 天仍停留' })
+    ])
+  ]);
+
+  // 阶段 + 部门双列
+  const maxStage = Math.max(...data.stage_counts.map(s => s.count), 1);
+  const maxDept = Math.max(...data.dept_counts.map(d => d.count), 1);
+
+  const twoCol = el('div', { class: 'hr-2col' }, [
+    el('div', { class: 'hr-panel' }, [
+      el('h2', { text: '阶段分布' }),
+      ...data.stage_counts.map(s => el('div', { class: 'bar-row' }, [
+        el('div', { class: 'lbl', text: s.stage }),
+        el('div', { class: 'bar-track' }, [
+          el('div', { class: 'bar-fill', style: 'width:' + (s.count / maxStage * 100) + '%' })
+        ]),
+        el('div', { class: 'count', text: s.count })
+      ]))
+    ]),
+    el('div', { class: 'hr-panel' }, [
+      el('h2', { text: '部门分布' }),
+      ...data.dept_counts.map(d => el('div', { class: 'bar-row' }, [
+        el('div', { class: 'lbl', text: d.department }),
+        el('div', { class: 'bar-track' }, [
+          el('div', { class: 'bar-fill slate', style: 'width:' + (d.count / maxDept * 100) + '%' })
+        ]),
+        el('div', { class: 'count', text: d.count })
+      ]))
+    ])
+  ]);
+
+  // 实习生紧凑表
+  const head = el('div', { class: 'hr-table-head' }, [
+    el('div', { text: '姓名' }),
+    el('div', { class: 'col-dept', text: '部门' }),
+    el('div', { class: 'col-stage', text: '阶段' }),
+    el('div', { text: '进度' }),
+    el('div', { text: '状态' })
+  ]);
+
+  const table = el('div', { class: 'hr-table' }, [
+    head,
+    ...data.interns.map(i => el('div', { class: 'hr-row', onclick: () => openHRIntern(i.id) }, [
+      el('div', { class: 'name-cell' }, [
+        document.createTextNode(i.name),
+        el('small', { text: i.position })
+      ]),
+      el('div', { class: 'col-dept muted', text: i.department }),
+      el('div', { class: 'col-stage' }, [
+        el('span', { class: 'tag ' + (i.stage === '入职适应' ? 'tag-ember' : i.stage === '快速成长' ? 'tag-slate' : 'tag-forest'),
+          text: i.stage })
+      ]),
+      el('div', { class: 'pct', text: i.progress_pct + '%' }),
+      el('div', {}, [
+        i.anomaly ? el('span', {}, [el('span', { class: 'anomaly-dot' }), '需关注']) : '正常'
+      ])
+    ]))
+  ]);
+
+  app.appendChild(header);
+  app.appendChild(el('div', { class: 'wrap' }, [stats, twoCol, table]));
+}
+
+async function openHRIntern(id) {
+  const data = await api.intern(id);
+  const me = state.user;
+  // 切到实习生视图，但展示的不是当前用户
+  state.user = { ...data.intern };
+  state.current = 'hrIntern';
+  state.data.hrView = data;
+  await renderIntern();
+  // 顶部加返回按钮
+  $('#topbarRight').innerHTML = '';
+  $('#topbarRight').appendChild(el('button', { class: 'btn btn-ghost btn-sm', onclick: backToHR, text: '← 返回 HR 总览' }));
+}
+
+function backToHR() {
+  // 重新拿回原 user
+  api.me(1).then(u => { state.user = u; state.current = 'hr'; renderHR(); });
+}
+
+function noop() {}
+
+/* ============================================================
+   启动
+   ============================================================ */
+renderLogin();
+</script>
+</body>
+</html>

@@ -6,166 +6,165 @@
 <title>实习生成长导航 · 启程</title>
 <style>
   :root {
-    --ink: #1a0e1f;
-    --warm-1: #fff3e0;
-    --warm-2: #ffd9a8;
-    --warm-3: #ff9a5a;
+    --warm-1: #fff3e0; --warm-2: #ffd9a8; --warm-3: #ff9a5a;
   }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body {
-    width: 100%; height: 100%; overflow: hidden;
-    background: #150820;
-    font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-    color: var(--warm-1);
-    -webkit-font-smoothing: antialiased;
-    cursor: crosshair;
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body {
+    width:100%; height:100%; overflow:hidden;
+    background:#0a0512;
+    font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--warm-1); cursor:crosshair;
+    -webkit-font-smoothing:antialiased;
   }
 
-  /* Background layers */
+  /* === 背景层：图片 120% 放大以提供更大视差空间 === */
   .bg-scene {
-    position: fixed; inset: 0; z-index: 1;
-    background-image: url('file:///Users/jojo/Pictures/微信图片_20260607145834_65_2.jpg');
-    background-size: cover;
-    background-position: center;
-    transition: transform 0.1s ease-out;
-    will-change: transform;
+    position:fixed; inset:-10%; z-index:1;
+    background-image:url('file:///Users/jojo/Pictures/微信图片_20260607145834_65_2.jpg');
+    background-size:cover; background-position:center;
+    filter:contrast(1.08) saturate(1.12) brightness(0.95);
+    will-change:transform;
+    transition: filter 1.5s ease;
   }
   .bg-scene::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: radial-gradient(ellipse 70% 50% at center, transparent 40%, rgba(15,5,20,0.65) 100%);
+    content:''; position:absolute; inset:0;
+    background:radial-gradient(ellipse 65% 45% at 50% 45%, transparent 30%, rgba(10,3,18,0.7) 100%);
   }
 
-  /* Light particles overlay */
-  .particles {
-    position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  /* === 光射线 === */
+  .light-rays {
+    position:fixed; inset:0; z-index:2; pointer-events:none;
+    background:
+      radial-gradient(ellipse at 48% 42%, rgba(255,200,140,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 52% 38%, rgba(255,160,90,0.04) 0%, transparent 50%);
+    animation: rayPulse 4s ease-in-out infinite;
   }
+  @keyframes rayPulse {
+    0%,100% { opacity:0.7; }
+    50%     { opacity:1; }
+  }
+
+  /* === 粒子 === */
+  .particles { position:fixed; inset:0; z-index:3; pointer-events:none; }
   .particle {
-    position: absolute;
-    width: 2px; height: 2px;
-    background: #ffd9a0;
-    border-radius: 50%;
-    box-shadow: 0 0 6px #ff9a5a;
-    animation: floatUp linear infinite;
+    position:absolute; border-radius:50%;
+    background:#ffd9a0;
+    box-shadow:0 0 8px #ff9a5a, 0 0 20px rgba(255,140,60,0.3);
+    animation:floatUp linear infinite;
   }
   @keyframes floatUp {
-    0% { transform: translateY(0) scale(1); opacity: 0; }
-    10% { opacity: 0.8; }
-    90% { opacity: 0.3; }
-    100% { transform: translateY(-100vh) scale(0.5); opacity: 0; }
+    0%   { transform:translateY(0) scale(0.3); opacity:0; }
+    5%   { opacity:0.9; }
+    85%  { opacity:0.2; }
+    100% { transform:translateY(-110vh) scale(1.2); opacity:0; }
   }
 
-  /* Vignette + grain */
+  /* === 大气层 === */
   .vignette {
-    position: fixed; inset: 0; z-index: 3; pointer-events: none;
-    background: radial-gradient(ellipse 80% 60% at center, transparent 20%, rgba(12,4,16,0.8) 100%);
+    position:fixed; inset:0; z-index:4; pointer-events:none;
+    background:radial-gradient(ellipse 75% 55% at center, transparent 15%, rgba(6,2,10,0.85) 100%);
   }
   .grain {
-    position: fixed; inset: 0; z-index: 4; pointer-events: none;
-    opacity: 0.04;
-    background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.6) 1px, transparent 0);
-    background-size: 3px 3px;
+    position:fixed; inset:0; z-index:5; pointer-events:none; opacity:0.03;
+    background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,0.6) 1px, transparent 0);
+    background-size:2.5px 2.5px;
   }
 
-  /* Corner brackets */
+  /* === 边角 === */
   .corner {
-    position: fixed; z-index: 8; width: 18px; height: 18px;
-    border-color: var(--warm-3); opacity: 0.5;
-    animation: fadeUp 1.5s ease 0.6s both;
+    position:fixed; z-index:8; width:20px; height:20px;
+    border-color:var(--warm-3); opacity:0;
+    animation:fadeUp 1.6s ease 0.6s both;
   }
-  .corner.tl { top: 24px; left: 24px;  border-top: 1px solid; border-left: 1px solid; }
-  .corner.tr { top: 24px; right: 24px; border-top: 1px solid; border-right: 1px solid; }
-  .corner.bl { bottom: 24px; left: 24px;  border-bottom: 1px solid; border-left: 1px solid; }
-  .corner.br { bottom: 24px; right: 24px; border-bottom: 1px solid; border-right: 1px solid; }
+  .corner.tl { top:28px; left:28px;  border-top:1px solid; border-left:1px solid; }
+  .corner.tr { top:28px; right:28px; border-top:1px solid; border-right:1px solid; }
+  .corner.bl { bottom:28px; left:28px;  border-bottom:1px solid; border-left:1px solid; }
+  .corner.br { bottom:28px; right:28px; border-bottom:1px solid; border-right:1px solid; }
 
-  /* Top bar */
+  /* === 顶栏 === */
   .topbar {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 8;
-    padding: 12px 24px;
-    display: flex; align-items: center; justify-content: space-between;
-    background: linear-gradient(180deg, rgba(10,5,15,0.7) 0%, transparent 100%);
-    animation: fadeDown 1.2s ease 0.4s both;
+    position:fixed; top:0; left:0; right:0; z-index:8;
+    padding:12px 28px;
+    display:flex; align-items:center; justify-content:space-between;
+    background:linear-gradient(180deg, rgba(6,2,10,0.8) 0%, transparent 100%);
+    animation:fadeDown 1.3s ease 0.4s both;
   }
-  .topbar .brand { font-size: 13px; font-weight: 500; letter-spacing: 0.12em; }
-  .topbar .chapter { font-size: 10px; opacity: 0.5; letter-spacing: 0.2em; }
+  .topbar .brand { font-size:13px; font-weight:500; letter-spacing:0.12em; }
+  .topbar .chapter { font-size:10px; opacity:0.5; letter-spacing:0.2em; }
 
-  /* Center stage */
+  /* === 中央文字 === */
   .stage {
-    position: fixed; inset: 0; z-index: 10;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    pointer-events: none;
+    position:fixed; inset:0; z-index:10;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    pointer-events:none;
   }
   .title {
-    font-size: 52px; font-weight: 200; letter-spacing: 0.35em;
-    text-indent: 0.35em;
-    animation: fadeUp 1.6s ease 0.8s both;
-    text-shadow: 0 0 80px rgba(255,140,60,0.4);
+    font-size:56px; font-weight:200; letter-spacing:0.4em; text-indent:0.4em;
+    animation:fadeUp 1.8s ease 0.9s both;
+    text-shadow:0 0 100px rgba(255,150,70,0.5), 0 0 40px rgba(255,100,40,0.3);
   }
   .subtitle {
-    margin-top: 12px;
-    font-size: 11px; letter-spacing: 0.5em; text-indent: 0.5em;
-    opacity: 0; color: var(--warm-2);
-    animation: fadeUp 1.6s ease 1.2s both;
+    margin-top:14px;
+    font-size:11px; letter-spacing:0.55em; text-indent:0.55em;
+    opacity:0; color:var(--warm-2);
+    animation:fadeUp 1.8s ease 1.3s both;
   }
+
+  /* === 按钮 === */
   .btn-start {
-    margin-top: 48px;
-    padding: 14px 56px;
-    border: 1px solid rgba(255,180,120,0.3);
-    background: rgba(20,5,15,0.6);
-    backdrop-filter: blur(8px);
-    color: var(--warm-1);
-    font-size: 15px; font-weight: 300; letter-spacing: 0.3em;
-    cursor: pointer; pointer-events: auto;
-    font-family: inherit;
-    border-radius: 2px;
-    animation: fadeUp 1.6s ease 1.6s both,
-               breathing 3s ease-in-out 2s infinite;
-    transition: all 0.3s;
+    margin-top:56px;
+    padding:15px 60px;
+    border:1px solid rgba(255,180,120,0.35);
+    background:rgba(15,4,10,0.65); backdrop-filter:blur(10px);
+    color:var(--warm-1); font-size:15px; font-weight:300; letter-spacing:0.35em;
+    cursor:pointer; pointer-events:auto; font-family:inherit; border-radius:2px;
+    animation:fadeUp 1.8s ease 1.7s both,
+               breathing 3.5s ease-in-out 2s infinite;
+    transition:all 0.35s;
   }
   .btn-start:hover {
-    background: rgba(255,140,60,0.15);
-    border-color: rgba(255,160,100,0.6);
-    box-shadow: 0 0 40px rgba(255,120,60,0.25);
+    background:rgba(255,140,60,0.18);
+    border-color:rgba(255,170,110,0.7);
+    box-shadow:0 0 50px rgba(255,120,60,0.3), 0 0 100px rgba(255,100,40,0.15);
+    transform:scale(1.03);
   }
   @keyframes breathing {
-    0%, 100% { box-shadow: 0 0 20px rgba(255,120,60,0.15), inset 0 0 8px rgba(255,160,100,0.08); }
-    50%      { box-shadow: 0 0 50px rgba(255,120,60,0.35), inset 0 0 18px rgba(255,160,100,0.18); }
+    0%,100% { box-shadow:0 0 24px rgba(255,120,60,0.18), inset 0 0 10px rgba(255,150,100,0.08); }
+    50%     { box-shadow:0 0 56px rgba(255,120,60,0.4), inset 0 0 20px rgba(255,150,100,0.2); }
   }
-  @keyframes fadeUp   { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeUp   { from { opacity:0; transform:translateY(36px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeDown { from { opacity:0; transform:translateY(-24px); } to { opacity:1; transform:translateY(0); } }
 
   .hint {
-    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
-    z-index: 8;
-    font-size: 10px; letter-spacing: 0.25em;
-    opacity: 0; color: rgba(255,200,160,0.5);
-    animation: fadeUp 1.6s ease 2s both;
+    position:fixed; bottom:36px; left:50%; transform:translateX(-50%);
+    z-index:8; font-size:10px; letter-spacing:0.28em;
+    opacity:0; color:rgba(255,200,160,0.45);
+    animation:fadeUp 1.8s ease 2.1s both;
   }
 
-  /* Flash */
+  /* === 白色闪光 === */
   .flash {
-    position: fixed; inset: 0; z-index: 50;
-    background: white; opacity: 0; pointer-events: none;
+    position:fixed; inset:0; z-index:50; background:white; opacity:0; pointer-events:none;
   }
 
-  /* End screen */
+  /* === 结束页 === */
   .end {
-    position: fixed; inset: 0; z-index: 40;
-    background: linear-gradient(180deg, #f7f1e6 0%, #ead9bf 100%);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    opacity: 0; pointer-events: none;
-    font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    position:fixed; inset:0; z-index:40;
+    background:linear-gradient(180deg, #f7f1e6 0%, #ead9bf 100%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none;
+    font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
   }
-  .end-mark { width: 48px; height: 1px; background: #8a5a30; margin-bottom: 32px; opacity: 0.4; }
-  .end h1 { color: #1a0e1f; font-size: 32px; font-weight: 300; letter-spacing: 0.5em; text-indent: 0.5em; }
-  .end .end-sub { color: #6a4a30; margin-top: 18px; font-size: 11px; letter-spacing: 0.4em; opacity: 0.6; }
+  .end-mark { width:48px; height:1px; background:#8a5a30; margin-bottom:32px; opacity:0.4; }
+  .end h1 { color:#1a0e1f; font-size:32px; font-weight:300; letter-spacing:0.5em; text-indent:0.5em; }
+  .end .end-sub { color:#6a4a30; margin-top:18px; font-size:11px; letter-spacing:0.4em; opacity:0.6; }
 </style>
 </head>
 <body>
 
 <div class="bg-scene" id="bgScene"></div>
-
-<div id="particlesContainer" class="particles"></div>
+<div class="light-rays"></div>
+<div class="particles" id="particles"></div>
 <div class="vignette"></div>
 <div class="grain"></div>
 
@@ -185,8 +184,7 @@
   <button class="btn-start" id="btnStart" onclick="startJourney()">开始旅途</button>
 </div>
 
-<div class="hint">移动鼠标 · 体验视差</div>
-
+<div class="hint">移动鼠标 · 探索视差</div>
 <div class="flash" id="flash"></div>
 
 <div class="end" id="endScreen">
@@ -197,71 +195,103 @@
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 <script>
-(function () {
+(function(){
   'use strict';
 
-  // Particles
-  var pc = document.getElementById('particlesContainer');
-  for (var i = 0; i < 40; i++) {
-    var p = document.createElement('div');
-    p.className = 'particle';
-    p.style.left = Math.random() * 100 + '%';
-    p.style.bottom = '0';
-    p.style.animationDuration = (6 + Math.random() * 12) + 's';
-    p.style.animationDelay = Math.random() * 8 + 's';
-    p.style.width = (1 + Math.random() * 2) + 'px';
-    p.style.height = p.style.width;
+  // === 粒子 ===
+  var pc=document.getElementById('particles');
+  for(var i=0;i<60;i++){
+    var p=document.createElement('div');
+    p.className='particle';
+    p.style.left=(Math.random()*100)+'%';
+    p.style.bottom='0';
+    p.style.animationDuration=(5+Math.random()*14)+'s';
+    p.style.animationDelay=Math.random()*10+'s';
+    var s=1+Math.random()*2.5;
+    p.style.width=s+'px';p.style.height=s+'px';
     pc.appendChild(p);
   }
 
-  // Mouse parallax
-  var bg = document.getElementById('bgScene');
-  var mouseX = 0, mouseY = 0;
-  var smX = 0, smY = 0;
+  // === 鼠标视差（扩大范围：inset:-10% + 大位移） ===
+  var bg=document.getElementById('bgScene');
+  var mx=0,my=0,smx=0,smy=0;
 
-  window.onmousemove = function (e) {
-    mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
-    mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+  window.onmousemove=function(e){
+    mx=(e.clientX/window.innerWidth-0.5)*2;
+    my=(e.clientY/window.innerHeight-0.5)*2;
   };
 
-  function animate() {
-    smX += (mouseX - smX) * 0.04;
-    smY += (mouseY - smY) * 0.04;
-    bg.style.transform = 'translate(' + (smX * 15) + 'px, ' + (smY * 10) + 'px) scale(1.08)';
+  function animate(){
+    smx+=(mx-smx)*0.035;
+    smy+=(my-smy)*0.035;
+    // 30px 水平 + 22px 垂直位移，因 inset:-10% 图片范围足够
+    bg.style.transform='translate('+(smx*30)+'px, '+(smy*22)+'px)';
     requestAnimationFrame(animate);
   }
   animate();
 
-  // Journey animation
-  window.startJourney = function () {
-    var btn = document.getElementById('btnStart');
-    var flash = document.getElementById('flash');
-    var endScreen = document.getElementById('endScreen');
-    var stageEls = document.querySelectorAll('#stage .title, #stage .subtitle');
+  // === 旅程动画 ===
+  window.startJourney=function(){
+    var btn=document.getElementById('btnStart');
+    var flash=document.getElementById('flash');
+    var endScreen=document.getElementById('endScreen');
+    var stageEls=document.querySelectorAll('#stage .title, #stage .subtitle');
+    var rays=document.querySelector('.light-rays');
 
-    btn.onclick = null;
-    btn.style.pointerEvents = 'none';
+    btn.onclick=null;
+    btn.style.pointerEvents='none';
 
-    var tl = gsap.timeline();
+    var tl=gsap.timeline();
 
-    // UI fade out
-    tl.to(btn, { duration: 0.4, opacity: 0, scale: 0.9, ease: 'power2.in' });
-    tl.to(stageEls, { duration: 0.5, opacity: 0, y: -30, stagger: 0.08, ease: 'power2.in' }, '<');
-    tl.to('.hint, .topbar, .corner', { duration: 0.5, opacity: 0, ease: 'power1.in' }, '<');
+    // 1. UI 淡出
+    tl.to(btn,{duration:0.45, opacity:0, scale:0.88, ease:'power2.in'});
+    tl.to(stageEls,{duration:0.55, opacity:0, y:-35, stagger:0.08, ease:'power2.in'},'<');
+    tl.to('.hint, .topbar, .corner',{duration:0.55, opacity:0, ease:'power1.in'},'<');
 
-    // Camera zoom into the image
-    tl.to(bg, { duration: 1.8, scale: 1.35, ease: 'power2.inOut' }, '-=0.1');
-    tl.to('.vignette', { duration: 1.8, opacity: 0.6, ease: 'power1.in' }, '<');
-    tl.to(bg, { duration: 0.3, filter: 'brightness(2.5) blur(2px)', ease: 'power2.in' }, '+=0.2');
+    // 2. 画面推进 + 人物区域放大（模拟"走向你"）
+    //    把背景往人物方向推 + 放大
+    tl.to(bg,{
+      duration:2.0,
+      scale:1.42,
+      x:'-4%', y:'-5%',           // 微调焦点到人物
+      filter:'contrast(1.15) saturate(1.25) brightness(1.05)',
+      ease:'power2.inOut'
+    },'-=0.1');
 
-    // White flash
-    tl.to(flash, { duration: 0.3, opacity: 1, ease: 'power2.in' });
-    tl.to(flash, { duration: 0.15, opacity: 0, ease: 'none' });
+    // 光射线变强
+    tl.to(rays,{
+      duration:2.0,
+      opacity:1.6,
+      ease:'power1.in'
+    },'<');
 
-    // End screen
-    tl.set(endScreen, { pointerEvents: 'auto' });
-    tl.to(endScreen, { duration: 0.6, opacity: 1, ease: 'power2.out' });
-    tl.from(endScreen.children, { duration: 0.8, y: 40, opacity: 0, stagger: 0.12, ease: 'power2.out' }, '<+=0.15');
+    // 暗角收窄（聚焦感）
+    tl.to('.vignette',{
+      duration:2.0,
+      opacity:0.45,
+      ease:'power1.in'
+    },'<');
+
+    // 3. 高亮闪烁（人物"伸手"的瞬间感）
+    tl.to(bg,{
+      duration:0.25,
+      filter:'contrast(1.25) saturate(1.4) brightness(1.8)',
+      ease:'power2.in'
+    },'+=0.15');
+    tl.to(bg,{
+      duration:0.35,
+      filter:'contrast(1.25) saturate(1.4) brightness(2.8) blur(1.5px)',
+      ease:'power2.in'
+    });
+
+    // 4. 白色闪光
+    tl.to(flash,{duration:0.35, opacity:1, ease:'power2.in'});
+    tl.to(flash,{duration:0.2, opacity:0, ease:'none'});
+
+    // 5. 结束页
+    tl.set(endScreen,{pointerEvents:'auto'});
+    tl.to(endScreen,{duration:0.7, opacity:1, ease:'power2.out'});
+    tl.from(endScreen.children,{duration:0.9, y:50, opacity:0, stagger:0.14, ease:'power2.out'},'<+=0.2');
   };
 })();
 </script>

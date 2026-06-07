@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>实习生成长导航</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23c65d2e'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23fbe8d8'/%3E%3C/svg%3E">
 <style>
   /* ============================================================
      设计系统
@@ -149,6 +150,7 @@
     border-radius: 50%; background: var(--ember-glow);
   }
   .topbar-right { display: flex; align-items: center; gap: var(--s3); }
+  .topbar-right.is-hidden { display: none; }
   .who { font-size: 13px; color: var(--ink-soft); }
   .who b { color: var(--ink); font-weight: 600; }
 
@@ -841,7 +843,7 @@
       <span class="brand-mark"></span>
       <span>实习生成长导航</span>
     </div>
-    <div class="topbar-right" id="topbarRight">
+    <div class="topbar-right is-hidden" id="topbarRight">
       <span class="who" id="who"></span>
       <button class="btn btn-ghost btn-sm" onclick="logout()">切换身份</button>
     </div>
@@ -897,7 +899,7 @@ const el = (tag, attrs = {}, children = []) => {
   const node = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
     if (k === 'class') node.className = v;
-    else if (k === 'onclick') node.setAttribute('onclick', v);
+    else if (k === 'onclick') { if (typeof v === 'function') node.onclick = v; else node.setAttribute('onclick', v); }
     else if (k === 'html') node.innerHTML = v;
     else if (k === 'text') node.textContent = v;
     else if (k.startsWith('data-')) node.setAttribute(k, v);
@@ -970,6 +972,7 @@ function celebrate(text, sub) {
 async function setUser(user) {
   state.user = user;
   $('#who').innerHTML = `<b>${esc(user.name)}</b> · ${user.role === 'intern' ? '实习生' : user.role === 'mentor' ? '导师' : 'HR'}`;
+  $('#topbarRight').classList.remove('is-hidden');
   if (user.role === 'intern') {
     state.current = 'intern';
     await renderIntern();
@@ -984,6 +987,11 @@ async function setUser(user) {
 function logout() {
   state.user = null;
   state.current = 'login';
+  $('#topbarRight').classList.add('is-hidden');
+  $('#topbarRight').innerHTML = `
+    <span class="who" id="who"></span>
+    <button class="btn btn-ghost btn-sm" onclick="logout()">切换身份</button>
+  `;
   renderLogin();
 }
 
@@ -1005,8 +1013,8 @@ function renderLogin() {
   app.innerHTML = '';
 
   const roleGrid = el('div', { class: 'role-grid' }, [
-    roleCard('实习生', '我是新人', '我想看看自己的成长旅程', 'in', '实习生 · 看自己的旅程'),
-    roleCard('导师',   '我带实习生', '查看我带的所有实习生 + 带教计划', 'me', '导师 · 看我的实习生'),
+    roleCard('实习生', '我是新人', '我想看看自己的成长旅程', 'intern', '实习生 · 看自己的旅程'),
+    roleCard('导师',   '我带实习生', '查看我带的所有实习生 + 带教计划', 'mentor', '导师 · 看我的实习生'),
     roleCard('HR',     '我负责全局', '整体实习生分布、阶段、异常', 'hr', 'HR · 全局总览')
   ]);
 
@@ -1022,8 +1030,9 @@ function renderLogin() {
 }
 
 function roleCard(title, sub, desc, key, hint) {
+  const num = key === 'intern' ? '01' : key === 'mentor' ? '02' : '03';
   return el('div', { class: 'role-card', onclick: () => openRolePicker(key) }, [
-    el('div', { class: 'glyph', text: key === 'in' ? '01' : key === 'me' ? '02' : '03' }),
+    el('div', { class: 'glyph', text: num }),
     el('h3', { text: title }),
     el('p', { text: sub + '。' + desc }),
     el('div', { class: 'open-hint', text: hint + ' →' })
@@ -1031,8 +1040,11 @@ function roleCard(title, sub, desc, key, hint) {
 }
 
 function openRolePicker(roleKey) {
-  const filtered = DEMO_ACCOUNTS.filter(a => a.role === roleKey);
-  const roleLabel = roleKey === 'in' ? '实习生' : roleKey === 'me' ? '导师' : 'HR';
+  // roleKey: 'in' | 'me' | 'hr' → 'intern' | 'mentor' | 'hr'
+  const roleMap = { 'in': 'intern', 'me': 'mentor', 'hr': 'hr' };
+  const roleReal = roleMap[roleKey];
+  const filtered = DEMO_ACCOUNTS.filter(a => a.role === roleReal);
+  const roleLabel = roleReal === 'intern' ? '实习生' : roleReal === 'mentor' ? '导师' : 'HR';
 
   const list = el('div', { class: 'picker-list' },
     filtered.map(a => el('div', {
@@ -1642,20 +1654,28 @@ async function renderHR() {
 
 async function openHRIntern(id) {
   const data = await api.intern(id);
-  const me = state.user;
-  // 切到实习生视图，但展示的不是当前用户
   state.user = { ...data.intern };
   state.current = 'hrIntern';
   state.data.hrView = data;
   await renderIntern();
-  // 顶部加返回按钮
-  $('#topbarRight').innerHTML = '';
-  $('#topbarRight').appendChild(el('button', { class: 'btn btn-ghost btn-sm', onclick: backToHR, text: '← 返回 HR 总览' }));
+  // 顶部替换为返回按钮
+  const tr = $('#topbarRight');
+  tr.classList.remove('is-hidden');
+  tr.innerHTML = '';
+  tr.appendChild(el('button', { class: 'btn btn-ghost btn-sm', onclick: backToHR, text: '← 返回 HR 总览' }));
+  tr.appendChild(el('span', { class: 'who', html: `查看 <b>${esc(data.intern.name)}</b> 的成长旅程` }));
 }
 
 function backToHR() {
+  // 还原顶栏结构（#who 元素）
+  $('#topbarRight').innerHTML = `
+    <span class="who" id="who"></span>
+    <button class="btn btn-ghost btn-sm" onclick="logout()">切换身份</button>
+  `;
   // 重新拿回原 user
-  api.me(1).then(u => { state.user = u; state.current = 'hr'; renderHR(); });
+  api.me(1).then(u => {
+    setUser(u);
+  });
 }
 
 function noop() {}

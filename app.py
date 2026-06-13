@@ -427,7 +427,13 @@ def hr_dashboard():
 # ============================================================
 # 静态文件
 # ============================================================
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+from fastapi.responses import FileResponse
+
+@app.get("/")
+def root():
+    return FileResponse("static/index.html", media_type="text/html")
+
+app.mount("/", StaticFiles(directory="static"), name="static")
 
 if __name__ == "__main__":
     import os
